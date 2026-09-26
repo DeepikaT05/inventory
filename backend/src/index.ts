@@ -12,6 +12,7 @@ import { dashboardRouter } from './routes/dashboard.js';
 import { reportsRouter } from './routes/reports.js';
 import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
+import { sethRouter } from './routes/seth.js';
 
 const app = express();
 app.use(cors());
@@ -30,6 +31,7 @@ api.use('/shop', shopRouter);
 api.use('/items', itemsRouter);
 api.use('/dealers', dealersRouter);
 api.use('/arrivals', arrivalsRouter);
+api.use('/seth', sethRouter);
 api.use('/customers', customersRouter);
 api.use('/bills', billsRouter);
 api.use('/dashboard', dashboardRouter);

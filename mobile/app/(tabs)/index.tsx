@@ -41,9 +41,10 @@ export default function Home() {
         </View>
       </View>
 
-      <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
         <BigAction en="New sale" hi="नई बिक्री" bg={C.accent} pressed={C.a600} onPress={() => router.navigate('/sale')} />
         <BigAction en="Stock in" hi="माल आया" bg={C.g600} pressed={C.g700} onPress={() => router.navigate('/arrivals')} />
+        <BigAction en="Seth Khata" hi="सेठ खाता" bg="#8c491a" pressed="#703a14" onPress={() => router.navigate('/seth')} />
       </View>
 
       <SectionTitle en="Today's rate" hi="आज का भाव" right={<Btn variant="ghost" size={12} label={t('Change', 'बदलें')} onPress={() => router.navigate('/rates')} />} />

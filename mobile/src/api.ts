@@ -66,6 +66,52 @@ async function request<T>(path: string, method = 'GET', body?: unknown): Promise
   return data as T;
 }
 
+export interface SethConsignmentItem {
+  id: string;
+  consignmentId: string;
+  itemId?: string | null;
+  itemName: string;
+  itemColor: string;
+  boraCount: number;
+  totalGrams: number;
+  ratePaise: number;
+  totalAmountPaise: number;
+  weightsJson: string;
+}
+
+export interface SethConsignment {
+  id: string;
+  sethName: string;
+  sethPhone: string;
+  challanNo: string;
+  note: string;
+  advancePercent: number;
+  advancePaise: number;
+  deductionsPaise: number;
+  grossAmountPaise: number;
+  netPayablePaise: number;
+  paidPaise: number;
+  status: 'IN_STOCK' | 'STOCK_SOLD' | 'SETTLED';
+  paymentMode: string;
+  paymentRef: string;
+  receivedAt: string;
+  settledAt?: string | null;
+  items: SethConsignmentItem[];
+}
+
+export interface SethResponse {
+  consignments: SethConsignment[];
+  summary: {
+    sethCount: number;
+    totalGrossPaise: number;
+    totalAdvancePaise: number;
+    totalNetPayablePaise: number;
+    totalPaidPaise: number;
+    balanceDuePaise: number;
+    pendingLots: number;
+  };
+}
+
 export const api = {
   shop: () => request<Shop | null>('/shop'),
   saveShop: (data: Partial<Shop>) => request<Shop>('/shop', 'PUT', data),
@@ -87,6 +133,38 @@ export const api = {
     dealerId: string; slipNo?: string;
     lines: { itemId: string; packets: number; gramsEach: number; costRatePaise?: number }[];
   }) => request<Arrival>('/arrivals', 'POST', data),
+
+  seth: (params?: { seth?: string; status?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.seth) q.set('seth', params.seth);
+    if (params?.status) q.set('status', params.status);
+    const qs = q.toString();
+    return request<SethResponse>(`/seth${qs ? `?${qs}` : ''}`);
+  },
+  sethNames: () => request<{ sethName: string; sethPhone: string }[]>('/seth/list-names'),
+  sethOne: (id: string) => request<SethConsignment>(`/seth/${id}`),
+  createSethConsignment: (data: {
+    sethName: string;
+    sethPhone?: string;
+    challanNo?: string;
+    note?: string;
+    advancePercent?: number;
+    advancePaise?: number;
+    deductionsPaise?: number;
+    addToStock?: boolean;
+    items: {
+      itemId?: string | null;
+      itemName: string;
+      itemColor?: string;
+      boraCount: number;
+      totalGrams: number;
+      ratePaise: number;
+      weightsJson?: string;
+    }[];
+  }) => request<SethConsignment>('/seth', 'POST', data),
+  updateSethStatus: (id: string, data: { status: 'IN_STOCK' | 'STOCK_SOLD' | 'SETTLED'; paidPaise?: number; paymentMode?: string; paymentRef?: string }) =>
+    request<SethConsignment>(`/seth/${id}/status`, 'PATCH', data),
+  deleteSethConsignment: (id: string) => request<void>(`/seth/${id}`, 'DELETE'),
 
   customers: () => request<Customer[]>('/customers'),
   createCustomer: (name: string, phone = '') => request<Customer>('/customers', 'POST', { name, phone }),
