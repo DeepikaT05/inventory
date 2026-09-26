@@ -323,20 +323,17 @@
     <form id="lform">
       <div class="fg">
         <label for="lemail" id="l-lbl-email">Email Address</label>
-        <input type="email" id="lemail" placeholder="admin@mandiledger.com" autocomplete="email" required />
+        <input type="email" id="lemail" placeholder="Enter email address" autocomplete="off" value="" required />
       </div>
       <div class="fg">
         <label for="lpass" id="l-lbl-pass">Password</label>
-        <input type="password" id="lpass" placeholder="••••••••" autocomplete="current-password" required />
+        <input type="password" id="lpass" placeholder="Enter password" autocomplete="new-password" value="" required />
       </div>
       <button type="submit" class="btn btn-p btn-full" id="lbtn">
         <span id="lbtn-t">Sign In</span>
         <div class="spin" id="lspin" style="display:none"></div>
       </button>
     </form>
-    <p id="l-note" style="margin-top:18px;font-size:12px;color:var(--t3);text-align:center">
-      Default: admin@mandiledger.com / admin123
-    </p>
   </div>
 </div>
 
@@ -520,9 +517,10 @@ const I18N = {
     signInSub: 'Sign in to your super-admin account',
     emailLabel: 'Email Address',
     passwordLabel: 'Password',
+    emailPlaceholder: 'Enter email address',
+    passwordPlaceholder: 'Enter password',
     signInBtn: 'Sign In',
     signingIn: 'Signing in…',
-    defaultCreds: 'Default: admin@mandiledger.com / admin123',
     logout: 'Logout',
     mainMenu: 'Main',
     dashboard: 'Dashboard',
@@ -613,9 +611,10 @@ const I18N = {
     signInSub: 'अपने सुपर-एडमिन खाते में साइन इन करें',
     emailLabel: 'ईमेल पता',
     passwordLabel: 'पासवर्ड',
+    emailPlaceholder: 'ईमेल पता दर्ज करें',
+    passwordPlaceholder: 'पासवर्ड दर्ज करें',
     signInBtn: 'साइन इन करें',
     signingIn: 'साइन इन हो रहा है…',
-    defaultCreds: 'डिफ़ॉल्ट: admin@mandiledger.com / admin123',
     logout: 'लॉगआउट',
     mainMenu: 'मुख्य मेन्यू',
     dashboard: 'डैशबोर्ड',
@@ -723,8 +722,10 @@ function applyAdminLang(){
   if($('l-sub')) $('l-sub').textContent = t('signInSub');
   if($('l-lbl-email')) $('l-lbl-email').textContent = t('emailLabel');
   if($('l-lbl-pass')) $('l-lbl-pass').textContent = t('passwordLabel');
+  if($('lemail')) $('lemail').placeholder = t('emailPlaceholder');
+  if($('lpass')) $('lpass').placeholder = t('passwordPlaceholder');
   if($('lbtn-t')) $('lbtn-t').textContent = t('signInBtn');
-  if($('l-note')) $('l-note').textContent = t('defaultCreds');
+  if($('l-note')) $('l-note').remove();
 
   // Topbar
   if($('tb-badge')) $('tb-badge').textContent = t('badgeAdmin');
@@ -864,6 +865,8 @@ $('lform').onsubmit=async e=>{
 function doLogout(){
   tok=''; me=null; stores=[]; users=[];
   localStorage.removeItem('adm_tok'); localStorage.removeItem('adm_me');
+  if($('lemail')) $('lemail').value = '';
+  if($('lpass')) $('lpass').value = '';
   $('app').classList.remove('show'); $('login').style.display='flex';
 }
 $('logoutbtn').onclick=doLogout; $('sb-logout').onclick=doLogout;

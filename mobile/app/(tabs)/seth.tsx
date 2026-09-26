@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import Svg, { Circle, Path } from 'react-native-svg';
 import * as Print from 'expo-print';
 import { api, type SethConsignment, type SethConsignmentItem, type SethResponse } from '../../src/api';
 import { useAction, useStore } from '../../src/store';
@@ -261,7 +262,7 @@ export default function SethScreen() {
     say(t('Settlement completed! Payment recorded.', 'हिसाब चुकता हुआ! भुगतान दर्ज हो गया।'));
   });
 
-  // Format WhatsApp message with crisp alignment
+  // Format WhatsApp message with crisp alignment (Zero emojis)
   const formatWhatsAppText = (c: SethConsignment) => {
     const d = new Date(c.receivedAt);
     const arrivalDateStr = longDate(d);
@@ -269,20 +270,20 @@ export default function SethScreen() {
     const isSettled = c.status === 'SETTLED';
 
     const lines: string[] = [];
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`🏢 *${shop?.name || 'मंडी लेजर (Mandi Ledger)'}*`);
+    lines.push(`==============================`);
+    lines.push(`*${shop?.name || 'Mandi Ledger'}*`);
     if (shop?.address || shop?.phone) {
-      lines.push([shop?.address, shop?.phone ? `📞 ${shop.phone}` : ''].filter(Boolean).join(' · '));
+      lines.push([shop?.address, shop?.phone ? `Phone: ${shop.phone}` : ''].filter(Boolean).join(' · '));
     }
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`🧾 *थोक सेठ हिसाब पर्ची (SETTLEMENT VOUCHER)*`);
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`👤 *सेठ का नाम :* ${c.sethName}`);
-    if (c.sethPhone) lines.push(`📱 *फोन नंबर   :* ${c.sethPhone}`);
-    lines.push(`📅 *आवक दिनांक :* ${arrivalDateStr}`);
-    if (isSettled) lines.push(`✅ *चुकता दिनांक :* ${settleDateStr}`);
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`📦 *सामान व बोरा तुलाई विवरण:*`);
+    lines.push(`==============================`);
+    lines.push(`*SETH SETTLEMENT VOUCHER (हिसाब पर्ची)*`);
+    lines.push(`==============================`);
+    lines.push(`*Seth / Vyapari :* ${c.sethName}`);
+    if (c.sethPhone) lines.push(`*Phone Number   :* ${c.sethPhone}`);
+    lines.push(`*Arrival Date   :* ${arrivalDateStr}`);
+    if (isSettled) lines.push(`*Settled Date   :* ${settleDateStr}`);
+    lines.push(`==============================`);
+    lines.push(`*COMMODITIES & BORA WEIGHING DETAILS:*`);
     lines.push(``);
 
     c.items.forEach((it, idx) => {
@@ -293,41 +294,41 @@ export default function SethScreen() {
       const rate = (it.ratePaise / 100).toFixed(2);
       const amt = rs(it.totalAmountPaise);
 
-      lines.push(`${idx + 1}️⃣ *${it.itemName}*`);
-      lines.push(`   • कुल बोरा  : ${it.boraCount} बोरा`);
-      lines.push(`   • कुल वजन   : ${totalKg} kg (${qtl} क्विंटल)`);
-      lines.push(`   • भाव       : ₹${rate} / kg`);
-      lines.push(`   • कुल रकम   : *₹${amt}*`);
+      lines.push(`${idx + 1}. *${it.itemName}*`);
+      lines.push(`   - Bags  : ${it.boraCount} Bora`);
+      lines.push(`   - Weight: ${totalKg} kg (${qtl} Quintal)`);
+      lines.push(`   - Rate  : Rs ${rate} / kg`);
+      lines.push(`   - Total : *Rs ${amt}*`);
 
       if (boriWeights.length > 0) {
-        lines.push(`   • बोरी तुलाई (kg): ${boriWeights.join(', ')}`);
+        lines.push(`   - Bora Weights (kg): ${boriWeights.join(', ')}`);
       }
       lines.push(``);
     });
 
-    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`💰 *अंतिम हिसाब विवरण (FINANCIAL SUMMARY):*`);
-    lines.push(`• कुल माल (Gross Total)  : ₹${rs(c.grossAmountPaise)}`);
+    lines.push(`==============================`);
+    lines.push(`*FINANCIAL SUMMARY (अंतिम हिसाब सारांश):*`);
+    lines.push(`- Gross Goods Total: Rs ${rs(c.grossAmountPaise)}`);
     if (c.advancePaise > 0) {
-      lines.push(`• (-) अग्रिम भुगतान (Advance): -₹${rs(c.advancePaise)}`);
+      lines.push(`- Less Advance Paid: -Rs ${rs(c.advancePaise)}`);
     }
     if (c.deductionsPaise > 0) {
-      lines.push(`• (-) अन्य कटौती / भाड़ा : -₹${rs(c.deductionsPaise)}`);
+      lines.push(`- Less Deductions / Freight: -Rs ${rs(c.deductionsPaise)}`);
     }
-    lines.push(`──────────────────────`);
-    lines.push(`• *अंतिम देय राशि (Net Due)* : *₹${rs(c.netPayablePaise)}*`);
+    lines.push(`------------------------------`);
+    lines.push(`*Net Payable Amount: Rs ${rs(c.netPayablePaise)}*`);
 
     if (isSettled) {
-      lines.push(`• *भुगतान किया गया (Paid)*   : *₹${rs(c.paidPaise)} (${c.paymentMode})*`);
-      lines.push(`• *बकाया रकम (Balance)*    : *₹0 (पूर्ण चुकता)*`);
-      lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-      lines.push(`✅ *स्थिति:* हिसाब पूर्णतः चुकता हो चुका है।`);
+      lines.push(`*Amount Paid       : Rs ${rs(c.paidPaise)} (${c.paymentMode})*`);
+      lines.push(`*Balance Due       : Rs 0.00 (Fully Settled)*`);
+      lines.push(`==============================`);
+      lines.push(`*Status:* Payment Settled in Full.`);
     } else {
-      lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
-      lines.push(`⏳ *स्थिति:* माल बिकने पर भुगतान देय है।`);
+      lines.push(`==============================`);
+      lines.push(`*Status:* Payment due upon stock clearance.`);
     }
 
-    lines.push(`\nधन्यवाद! 🙏`);
+    lines.push(`\nThank you.`);
     return lines.join('\n');
   };
 
@@ -340,7 +341,7 @@ export default function SethScreen() {
     Linking.openURL(url).catch(() => say(t('Could not open WhatsApp', 'व्हाट्सएप नहीं खुल सका')));
   };
 
-  // Print PDF Parchi with immaculate alignment
+  // Print PDF Parchi with immaculate alignment (Zero emojis)
   const handlePrintParchi = async (c: SethConsignment) => {
     try {
       const isSettled = c.status === 'SETTLED';
@@ -360,14 +361,14 @@ export default function SethScreen() {
             <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;font-weight:bold;color:#201e1d;">${it.itemName}</td>
             <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:center;font-weight:600;">${it.boraCount}</td>
             <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;font-weight:600;">${totalKg} kg <small style="color:#645c50;">(${qtl} qtl)</small></td>
-            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;">₹${rate}</td>
-            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;font-weight:bold;color:#8c491a;">₹${rs(it.totalAmountPaise)}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;">Rs ${rate}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;font-weight:bold;color:#8c491a;">Rs ${rs(it.totalAmountPaise)}</td>
           </tr>
           ${weights.length > 0 ? `
             <tr>
               <td colspan="6" style="padding:6px 12px 10px;border-bottom:1px solid #e5dec9;background-color:#fcf9f2;">
                 <div style="font-size:11px;font-weight:700;color:#8c491a;margin-bottom:3px;">
-                  ⚖️ बोरी तुलाई वजन (Bora Weights in kg):
+                  Bora Weights (Tulai kg):
                 </div>
                 <div style="line-height:1.6;">
                   ${weights.map((w, idx) => `<span style="display:inline-block;background:#fff;border:1px solid #dcd3c4;border-radius:4px;padding:2px 6px;margin:2px 3px;font-size:11px;font-weight:600;">#${idx + 1}: <strong>${w} kg</strong></span>`).join('')}
@@ -419,16 +420,16 @@ export default function SethScreen() {
               <tr>
                 <td style="vertical-align:top;">
                   <div class="shop-title">${shop?.name || 'Mandi Ledger'}</div>
-                  <div class="shop-sub">${[shop?.address, shop?.phone ? `फोन: ${shop.phone}` : ''].filter(Boolean).join(' · ')}</div>
-                  <div style="font-size:15px;font-weight:700;color:#201e1d;margin-top:6px;">थोक आवक व अंतिम हिसाब पर्ची</div>
+                  <div class="shop-sub">${[shop?.address, shop?.phone ? `Phone: ${shop.phone}` : ''].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:15px;font-weight:700;color:#201e1d;margin-top:6px;">थोक आवक व अंतिम हिसाब पर्ची (Settlement Voucher)</div>
                 </td>
                 <td style="vertical-align:top;text-align:right;">
                   <div class="${isSettled ? 'badge-paid' : 'badge-unsettled'}">
-                    ${isSettled ? '✅ PAID & SETTLED (चुकता)' : '⏳ PAYMENT DUE (बाकी)'}
+                    ${isSettled ? 'PAID & SETTLED (चुकता)' : 'PAYMENT DUE (बाकी)'}
                   </div>
                   <div style="font-size:11.5px;color:#645c50;margin-top:8px;">
-                    आवक दिनांक: <strong>${arrivalDateStr}</strong><br/>
-                    ${isSettled ? `चुकता दिनांक: <strong>${settledDateStr}</strong>` : ''}
+                    Arrival Date: <strong>${arrivalDateStr}</strong><br/>
+                    ${isSettled ? `Settled Date: <strong>${settledDateStr}</strong>` : ''}
                   </div>
                 </td>
               </tr>
@@ -437,12 +438,12 @@ export default function SethScreen() {
             <!-- Seth & Settlement Details -->
             <div class="info-box">
               <div class="info-col">
-                <div class="info-row"><span class="info-lbl">सेठ / व्यापारी:</span><span class="info-val">${c.sethName}</span></div>
-                <div class="info-row"><span class="info-lbl">फोन नंबर:</span><span class="info-val">${c.sethPhone || '—'}</span></div>
+                <div class="info-row"><span class="info-lbl">Seth / Vyapari:</span><span class="info-val">${c.sethName}</span></div>
+                <div class="info-row"><span class="info-lbl">Phone Number:</span><span class="info-val">${c.sethPhone || '—'}</span></div>
               </div>
               <div class="info-col">
-                <div class="info-row"><span class="info-lbl">भुगतान स्थिति:</span><span class="info-val" style="color:${isSettled ? '#56633f' : '#b2622d'}">${isSettled ? 'पूर्णतः चुकता' : 'भुगतान बाकी'}</span></div>
-                ${isSettled ? `<div class="info-row"><span class="info-lbl">भुगतान माध्यम:</span><span class="info-val">${c.paymentMode}</span></div>` : ''}
+                <div class="info-row"><span class="info-lbl">Payment Status:</span><span class="info-val" style="color:${isSettled ? '#56633f' : '#b2622d'}">${isSettled ? 'Fully Settled' : 'Payment Due'}</span></div>
+                ${isSettled ? `<div class="info-row"><span class="info-lbl">Payment Mode:</span><span class="info-val">${c.paymentMode}</span></div>` : ''}
               </div>
             </div>
 
@@ -451,11 +452,11 @@ export default function SethScreen() {
               <thead>
                 <tr>
                   <th style="width:6%;text-align:center;">#</th>
-                  <th style="width:32%;text-align:left;">सामान / विवरण</th>
-                  <th style="width:12%;text-align:center;">कुल बोरा</th>
-                  <th style="width:18%;text-align:right;">कुल वजन</th>
-                  <th style="width:14%;text-align:right;">भाव (₹/kg)</th>
-                  <th style="width:18%;text-align:right;">रकम (₹)</th>
+                  <th style="width:32%;text-align:left;">Item / Commodity</th>
+                  <th style="width:12%;text-align:center;">Total Bags</th>
+                  <th style="width:18%;text-align:right;">Total Weight</th>
+                  <th style="width:14%;text-align:right;">Rate (Rs/kg)</th>
+                  <th style="width:18%;text-align:right;">Amount (Rs)</th>
                 </tr>
               </thead>
               <tbody>
@@ -467,33 +468,33 @@ export default function SethScreen() {
             <div class="summary-wrap">
               <div class="summary-card">
                 <div class="sum-row">
-                  <span>कुल माल की कीमत (Gross):</span>
-                  <span style="font-weight:700;">₹${rs(c.grossAmountPaise)}</span>
+                  <span>Gross Goods Total:</span>
+                  <span style="font-weight:700;">Rs ${rs(c.grossAmountPaise)}</span>
                 </div>
                 ${c.advancePaise > 0 ? `
                   <div class="sum-row" style="color:#8c491a;">
-                    <span>(-) अग्रिम भुगतान (Advance):</span>
-                    <span style="font-weight:700;">-₹${rs(c.advancePaise)}</span>
+                    <span>(-) Advance Paid:</span>
+                    <span style="font-weight:700;">-Rs ${rs(c.advancePaise)}</span>
                   </div>
                 ` : ''}
                 ${c.deductionsPaise > 0 ? `
                   <div class="sum-row" style="color:#645c50;">
-                    <span>(-) अन्य कटौती / भाड़ा:</span>
-                    <span style="font-weight:700;">-₹${rs(c.deductionsPaise)}</span>
+                    <span>(-) Deductions / Freight:</span>
+                    <span style="font-weight:700;">-Rs ${rs(c.deductionsPaise)}</span>
                   </div>
                 ` : ''}
                 <div class="sum-row total-bold">
-                  <span>अंतिम देय राशि (Net Due):</span>
-                  <span>₹${rs(c.netPayablePaise)}</span>
+                  <span>Net Due to Seth:</span>
+                  <span>Rs ${rs(c.netPayablePaise)}</span>
                 </div>
                 ${isSettled ? `
                   <div class="sum-row paid-bold">
-                    <span>(✓) भुगतान किया (Paid):</span>
-                    <span>₹${rs(c.paidPaise)} (${c.paymentMode})</span>
+                    <span>Amount Paid:</span>
+                    <span>Rs ${rs(c.paidPaise)} (${c.paymentMode})</span>
                   </div>
                   <div class="sum-row" style="font-size:12px;color:#56633f;font-weight:bold;margin-top:2px;">
-                    <span>बकाया राशि (Balance):</span>
-                    <span>₹0.00 (पूर्ण चुकता)</span>
+                    <span>Balance Due:</span>
+                    <span>Rs 0.00 (Fully Settled)</span>
                   </div>
                 ` : ''}
               </div>
@@ -502,15 +503,15 @@ export default function SethScreen() {
             <!-- Signature Lines -->
             <div class="footer-sig">
               <div class="sig-box">
-                <div class="sig-line">सेठ / सप्लायर हस्ताक्षर</div>
+                <div class="sig-line">Seth / Supplier Signature</div>
               </div>
               <div class="sig-box">
-                <div class="sig-line">अधिकृत हस्ताक्षर (Mandi Ledger)</div>
+                <div class="sig-line">Authorized Signatory</div>
               </div>
             </div>
 
             <div style="text-align:center;font-size:11px;color:#82796a;margin-top:20px;">
-              यह कंप्यूटर जनरेटेड वैध हिसाब पर्ची है। धन्यवाद!
+              Computer-generated official settlement voucher.
             </div>
           </div>
         </body>
@@ -557,7 +558,10 @@ export default function SethScreen() {
       {/* ── ACTION BAR & SEARCH ── */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.divider, borderRadius: R.md, paddingHorizontal: 10, height: 42 }}>
-          <Txt size={13} color={C.n600} style={{ marginRight: 6 }}>🔍</Txt>
+          <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={C.n600} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
+            <Circle cx="11" cy="11" r="8" />
+            <Path d="m21 21-4.35-4.35" />
+          </Svg>
           <TextInput
             placeholder={t('Search Seth or item...', 'सेठ या सामान खोजें...')}
             placeholderTextColor={C.n600}
@@ -568,7 +572,7 @@ export default function SethScreen() {
           />
           {searchQuery ? (
             <Pressable onPress={() => { setSearchQuery(''); loadData(); }}>
-              <Txt size={13} color={C.n600}>✕</Txt>
+              <Txt size={12} weight={600} color={C.n600}>Clear</Txt>
             </Pressable>
           ) : null}
         </View>
@@ -583,9 +587,9 @@ export default function SethScreen() {
       {/* ── STATUS FILTER CHIPS ── */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, marginBottom: 14 }}>
         <Chip label={t('All Lots', 'सभी लॉट')} on={statusFilter === 'ALL'} onPress={() => setStatusFilter('ALL')} />
-        <Chip label={t('📦 In Stock', '📦 स्टॉक में')} on={statusFilter === 'IN_STOCK'} onPress={() => setStatusFilter('IN_STOCK')} />
-        <Chip label={t('⏳ Sold (Due)', '⏳ माल बिका (बाकी)')} on={statusFilter === 'STOCK_SOLD'} onPress={() => setStatusFilter('STOCK_SOLD')} />
-        <Chip label={t('✅ Settled', '✅ चुकता हिसाब')} on={statusFilter === 'SETTLED'} onPress={() => setStatusFilter('SETTLED')} />
+        <Chip label={t('In Stock', 'स्टॉक में')} on={statusFilter === 'IN_STOCK'} onPress={() => setStatusFilter('IN_STOCK')} />
+        <Chip label={t('Sold (Due)', 'माल बिका (बाकी)')} on={statusFilter === 'STOCK_SOLD'} onPress={() => setStatusFilter('STOCK_SOLD')} />
+        <Chip label={t('Settled', 'चुकता हिसाब')} on={statusFilter === 'SETTLED'} onPress={() => setStatusFilter('SETTLED')} />
       </ScrollView>
 
       {/* ── CONSIGNMENT CARDS LIST ── */}
@@ -733,7 +737,7 @@ export default function SethScreen() {
 
         <Field
           label={t('Phone (Optional)', 'फोन नंबर (ऐच्छिक)')}
-          placeholder="e.g. 9876543210"
+          placeholder={t('10-digit mobile number', '10 अंकों का मोबाइल नंबर')}
           keyboardType="phone-pad"
           value={formSethPhone}
           onChangeText={setFormSethPhone}
@@ -808,7 +812,7 @@ export default function SethScreen() {
                     <Txt size={15} weight={700}>{item.name}</Txt>
                   </View>
                   <Pressable onPress={() => removeItemDraft(item.id)}>
-                    <Txt size={12} color="#9c2a1c">✕ {t('Remove', 'हटाएं')}</Txt>
+                    <Txt size={12} weight={600} color="#9c2a1c">{t('Remove', 'हटाएं')}</Txt>
                   </Pressable>
                 </View>
 
@@ -859,7 +863,7 @@ export default function SethScreen() {
                 <View style={styles.weighingSection}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                     <Txt size={11} weight={700} color={C.a700}>
-                      ⚖️ {t('Individual Bora Weights (Tulai)', 'अलग-अलग बोरी का वजन (तुलाई दर्ज करें)')}
+                      {t('Individual Bora Weights (Tulai)', 'अलग-अलग बोरी का वजन (तुलाई दर्ज करें)')}
                     </Txt>
                     {item.weights.length > 0 && (
                       <Pressable onPress={() => clearWeights(item.id)}>
@@ -980,7 +984,11 @@ export default function SethScreen() {
           style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 12 }}
         >
           <View style={[styles.checkbox, formAddToStock && styles.checkboxOn]}>
-            {formAddToStock && <Txt size={12} color={C.white}>✓</Txt>}
+            {formAddToStock && (
+              <Svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={C.white} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M20 6 9 17l-5-5" />
+              </Svg>
+            )}
           </View>
           <Txt size={12} weight={600}>
             {t('Automatically add kilograms to store inventory stock', 'स्टॉक में यह सामान (किलोग्राम) तुरंत जोड़ें')}
@@ -1098,7 +1106,7 @@ export default function SethScreen() {
               {selectedConsignment.status === 'SETTLED' && (
                 <View style={{ marginTop: 8, backgroundColor: C.g100, borderRadius: R.sm, padding: 8 }}>
                   <Txt size={11} color={C.g700} weight={700}>
-                    ✓ {t('Payment Settled', 'भुगतान चुकता हुआ')}: ₹{rs(selectedConsignment.paidPaise)} ({selectedConsignment.paymentMode})
+                    {t('Payment Settled', 'भुगतान चुकता हुआ')}: ₹{rs(selectedConsignment.paidPaise)} ({selectedConsignment.paymentMode})
                   </Txt>
                   {selectedConsignment.settledAt && (
                     <Txt size={10} color={C.g700}>
@@ -1114,7 +1122,7 @@ export default function SethScreen() {
               {selectedConsignment.status === 'IN_STOCK' && (
                 <Btn
                   variant="plain"
-                  label={t('📦 Mark Stock as Sold (Ready to Settle)', '📦 माल बिक गया मार्क करें (हिसाब तैयार)')}
+                  label={t('Mark Stock as Sold (Ready to Settle)', 'माल बिक गया मार्क करें (हिसाब तैयार)')}
                   onPress={() => handleUpdateStatus(selectedConsignment.id, 'STOCK_SOLD')}
                   style={{ backgroundColor: '#fff0e6', borderColor: C.a700, borderWidth: 1 }}
                 />
@@ -1122,7 +1130,7 @@ export default function SethScreen() {
 
               {selectedConsignment.status !== 'SETTLED' && (
                 <Btn
-                  label={t('✅ Settle & Record Payment to Seth', '✅ हिसाब चुकता करें व भुगतान दर्ज करें')}
+                  label={t('Settle & Record Payment to Seth', 'हिसाब चुकता करें व भुगतान दर्ज करें')}
                   onPress={() => {
                     setSettleAmountText(String(selectedConsignment.netPayablePaise / 100));
                     setOpenSettle(true);
@@ -1186,13 +1194,15 @@ export default function SethScreen() {
         />
       </Sheet>
 
-      {/* ── MODAL 4: POST-SETTLEMENT SUCCESS & AUTO SHARE/PRINT POPUP ── */}
+      {/* ── MODAL 4: POST-SETTLEMENT SUCCESS & AUTO SHARE/PRINT POPUP (Zero emojis) ── */}
       <Sheet visible={openPostSettle && Boolean(selectedConsignment)} onClose={() => setOpenPostSettle(false)}>
         {selectedConsignment && (
           <View style={{ alignItems: 'center', paddingVertical: 4 }}>
-            {/* Green Success Badge */}
+            {/* SVG Checkmark Circle */}
             <View style={styles.successIconCircle}>
-              <Txt size={28}>✅</Txt>
+              <Svg width={30} height={30} viewBox="0 0 24 24" fill="none" stroke="#56633f" strokeWidth={2.75} strokeLinecap="round" strokeLinejoin="round">
+                <Path d="M20 6 9 17l-5-5" />
+              </Svg>
             </View>
 
             <Txt heading size={21} style={{ textAlign: 'center', marginBottom: 4 }}>
@@ -1245,7 +1255,7 @@ export default function SethScreen() {
             <View style={{ width: '100%', gap: 10 }}>
               <Btn
                 variant="plain"
-                label={t('🟢 Share Slip on WhatsApp', '🟢 WhatsApp पर पूरी पर्ची भेजें')}
+                label={t('Share Slip on WhatsApp', 'WhatsApp पर पूरी पर्ची भेजें')}
                 onPress={() => handleShareWhatsApp(selectedConsignment)}
                 style={{ backgroundColor: '#25D366', paddingVertical: 14 }}
                 textStyle={{ color: C.white, fontWeight: '700', fontSize: 15 }}
@@ -1253,7 +1263,7 @@ export default function SethScreen() {
 
               <Btn
                 variant="secondary"
-                label={t('📄 View & Print PDF Voucher', '📄 PDF हिसाब पर्ची देखें व डाउनलोड करें')}
+                label={t('View & Print PDF Voucher', 'PDF हिसाब पर्ची देखें व डाउनलोड करें')}
                 onPress={() => handlePrintParchi(selectedConsignment)}
                 style={{ backgroundColor: C.surface, borderColor: C.a700, borderWidth: 1.5, paddingVertical: 14 }}
                 textStyle={{ color: C.a700, fontWeight: '700', fontSize: 15 }}
