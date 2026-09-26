@@ -35,7 +35,7 @@ const PRESET_VEGGIES = [
 ];
 
 export default function SethScreen() {
-  const { lang, t, say, refresh } = useStore();
+  const { shop, lang, t, say, refresh } = useStore();
   const run = useAction();
 
   const [data, setData] = useState<SethResponse | null>(null);
@@ -47,6 +47,7 @@ export default function SethScreen() {
   const [selectedConsignment, setSelectedConsignment] = useState<SethConsignment | null>(null);
   const [openDetail, setOpenDetail] = useState(false);
   const [openSettle, setOpenSettle] = useState(false);
+  const [openPostSettle, setOpenPostSettle] = useState(false); // Post-settlement popup
   const [settleAmountText, setSettleAmountText] = useState('');
   const [settlePaymentMode, setSettlePaymentMode] = useState('CASH');
 
@@ -240,13 +241,13 @@ export default function SethScreen() {
     say(newStatus === 'STOCK_SOLD' ? t('Marked as stock sold!', 'माल बिक गया मार्क किया!') : t('Status updated', 'स्थिति बदली'));
   });
 
-  // Final Settlement confirmation
+  // Final Settlement confirmation - Automatically pops up WhatsApp & PDF sharing!
   const handleConfirmSettle = () => run(async () => {
     if (!selectedConsignment) return;
     const paidRs = parseFloat(settleAmountText) || 0;
     const paidPaise = Math.round(paidRs * 100);
 
-    await api.updateSethStatus(selectedConsignment.id, {
+    const updated = await api.updateSethStatus(selectedConsignment.id, {
       status: 'SETTLED',
       paidPaise,
       paymentMode: settlePaymentMode,
@@ -254,70 +255,123 @@ export default function SethScreen() {
 
     setOpenSettle(false);
     setOpenDetail(false);
+    setSelectedConsignment(updated);
+    setOpenPostSettle(true); // Pops up WhatsApp & PDF Share modal immediately!
     await loadData();
     say(t('Settlement completed! Payment recorded.', 'हिसाब चुकता हुआ! भुगतान दर्ज हो गया।'));
   });
 
-  // Share Settlement Voucher on WhatsApp
-  const handleShareWhatsApp = (c: SethConsignment) => {
-    const lines = [
-      `* मंडी लेजर — सेठ हिसाब पर्ची *`,
-      `*सेठ:* ${c.sethName} ${c.sethPhone ? `(${c.sethPhone})` : ''}`,
-      `*दिनांक:* ${longDate(new Date(c.receivedAt))}`,
-      `━━━━━━━━━━━━━━━━━━━`,
-      `*सामान व बोरा विवरण:*`,
-    ];
+  // Format WhatsApp message with crisp alignment
+  const formatWhatsAppText = (c: SethConsignment) => {
+    const d = new Date(c.receivedAt);
+    const arrivalDateStr = longDate(d);
+    const settleDateStr = c.settledAt ? longDate(new Date(c.settledAt)) : longDate(new Date());
+    const isSettled = c.status === 'SETTLED';
+
+    const lines: string[] = [];
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`🏢 *${shop?.name || 'मंडी लेजर (Mandi Ledger)'}*`);
+    if (shop?.address || shop?.phone) {
+      lines.push([shop?.address, shop?.phone ? `📞 ${shop.phone}` : ''].filter(Boolean).join(' · '));
+    }
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`🧾 *थोक सेठ हिसाब पर्ची (SETTLEMENT VOUCHER)*`);
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`👤 *सेठ का नाम :* ${c.sethName}`);
+    if (c.sethPhone) lines.push(`📱 *फोन नंबर   :* ${c.sethPhone}`);
+    lines.push(`📅 *आवक दिनांक :* ${arrivalDateStr}`);
+    if (isSettled) lines.push(`✅ *चुकता दिनांक :* ${settleDateStr}`);
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`📦 *सामान व बोरा तुलाई विवरण:*`);
+    lines.push(``);
 
     c.items.forEach((it, idx) => {
       let boriWeights: number[] = [];
       try { boriWeights = JSON.parse(it.weightsJson || '[]'); } catch { boriWeights = []; }
-      lines.push(`${idx + 1}. *${it.itemName}*: ${it.boraCount} बोरा`);
-      lines.push(`   वजन: ${(it.totalGrams / 1000).toFixed(1)} kg | भाव: ₹${(it.ratePaise / 100).toFixed(2)}/kg`);
-      lines.push(`   रकम: ₹${rs(it.totalAmountPaise)}`);
+      const totalKg = (it.totalGrams / 1000).toFixed(1);
+      const qtl = (it.totalGrams / 100000).toFixed(2);
+      const rate = (it.ratePaise / 100).toFixed(2);
+      const amt = rs(it.totalAmountPaise);
+
+      lines.push(`${idx + 1}️⃣ *${it.itemName}*`);
+      lines.push(`   • कुल बोरा  : ${it.boraCount} बोरा`);
+      lines.push(`   • कुल वजन   : ${totalKg} kg (${qtl} क्विंटल)`);
+      lines.push(`   • भाव       : ₹${rate} / kg`);
+      lines.push(`   • कुल रकम   : *₹${amt}*`);
+
       if (boriWeights.length > 0) {
-        lines.push(`   तुलाई: ${boriWeights.slice(0, 10).join(', ')}${boriWeights.length > 10 ? ` ... (+${boriWeights.length - 10} और)` : ''}`);
+        lines.push(`   • बोरी तुलाई (kg): ${boriWeights.join(', ')}`);
       }
+      lines.push(``);
     });
 
-    lines.push(`━━━━━━━━━━━━━━━━━━━`);
-    lines.push(`*कुल माल (Gross):* ₹${rs(c.grossAmountPaise)}`);
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+    lines.push(`💰 *अंतिम हिसाब विवरण (FINANCIAL SUMMARY):*`);
+    lines.push(`• कुल माल (Gross Total)  : ₹${rs(c.grossAmountPaise)}`);
     if (c.advancePaise > 0) {
-      lines.push(`*अग्रिम भुगतान (Advance):* -₹${rs(c.advancePaise)}`);
+      lines.push(`• (-) अग्रिम भुगतान (Advance): -₹${rs(c.advancePaise)}`);
     }
     if (c.deductionsPaise > 0) {
-      lines.push(`*मंडी कटौती / भाड़ा:* -₹${rs(c.deductionsPaise)}`);
+      lines.push(`• (-) अन्य कटौती / भाड़ा : -₹${rs(c.deductionsPaise)}`);
     }
-    lines.push(`*अंतिम देने योग्य (Net Balance):* *₹${rs(c.netPayablePaise)}*`);
-    lines.push(`*स्थिति:* ${c.status === 'SETTLED' ? '✅ हिसाब चुकता (SETTLED)' : c.status === 'STOCK_SOLD' ? '⏳ माल बिका - भुगतान बाकी' : '📦 स्टॉक में उपलब्ध'}`);
-    if (c.status === 'SETTLED' && c.settledAt) {
-      lines.push(`*भुगतान:* ₹${rs(c.paidPaise)} (${c.paymentMode})`);
+    lines.push(`──────────────────────`);
+    lines.push(`• *अंतिम देय राशि (Net Due)* : *₹${rs(c.netPayablePaise)}*`);
+
+    if (isSettled) {
+      lines.push(`• *भुगतान किया गया (Paid)*   : *₹${rs(c.paidPaise)} (${c.paymentMode})*`);
+      lines.push(`• *बकाया रकम (Balance)*    : *₹0 (पूर्ण चुकता)*`);
+      lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+      lines.push(`✅ *स्थिति:* हिसाब पूर्णतः चुकता हो चुका है।`);
+    } else {
+      lines.push(`━━━━━━━━━━━━━━━━━━━━━━`);
+      lines.push(`⏳ *स्थिति:* माल बिकने पर भुगतान देय है।`);
     }
 
-    const msg = encodeURIComponent(lines.filter(Boolean).join('\n'));
+    lines.push(`\nधन्यवाद! 🙏`);
+    return lines.join('\n');
+  };
+
+  // Share Settlement Voucher on WhatsApp
+  const handleShareWhatsApp = (c: SethConsignment) => {
+    const text = formatWhatsAppText(c);
+    const msg = encodeURIComponent(text);
     const phoneClean = c.sethPhone.replace(/[^0-9]/g, '');
     const url = phoneClean ? `https://wa.me/91${phoneClean}?text=${msg}` : `https://wa.me/?text=${msg}`;
     Linking.openURL(url).catch(() => say(t('Could not open WhatsApp', 'व्हाट्सएप नहीं खुल सका')));
   };
 
-  // Print PDF Parchi
+  // Print PDF Parchi with immaculate alignment
   const handlePrintParchi = async (c: SethConsignment) => {
     try {
+      const isSettled = c.status === 'SETTLED';
+      const arrivalDateStr = longDate(new Date(c.receivedAt));
+      const settledDateStr = c.settledAt ? longDate(new Date(c.settledAt)) : longDate(new Date());
+
       const itemsHtml = c.items.map((it, i) => {
         let weights: number[] = [];
         try { weights = JSON.parse(it.weightsJson || '[]'); } catch { weights = []; }
+        const totalKg = (it.totalGrams / 1000).toFixed(1);
+        const qtl = (it.totalGrams / 100000).toFixed(2);
+        const rate = (it.ratePaise / 100).toFixed(2);
+
         return `
           <tr>
-            <td style="padding:8px;border-bottom:1px solid #ddd;">${i + 1}</td>
-            <td style="padding:8px;border-bottom:1px solid #ddd;font-weight:bold;">${it.itemName}</td>
-            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:center;">${it.boraCount}</td>
-            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:right;">${(it.totalGrams / 1000).toFixed(1)} kg</td>
-            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:right;">₹${(it.ratePaise / 100).toFixed(2)}</td>
-            <td style="padding:8px;border-bottom:1px solid #ddd;text-align:right;font-weight:bold;">₹${rs(it.totalAmountPaise)}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:center;">${i + 1}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;font-weight:bold;color:#201e1d;">${it.itemName}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:center;font-weight:600;">${it.boraCount}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;font-weight:600;">${totalKg} kg <small style="color:#645c50;">(${qtl} qtl)</small></td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;">₹${rate}</td>
+            <td style="padding:10px 8px;border-bottom:1px solid #dcd3c4;text-align:right;font-weight:bold;color:#8c491a;">₹${rs(it.totalAmountPaise)}</td>
           </tr>
           ${weights.length > 0 ? `
             <tr>
-              <td colspan="6" style="padding:4px 8px;border-bottom:1px solid #eee;font-size:11px;color:#666;">
-                <strong>तुलाई (kg):</strong> ${weights.map((w, idx) => `#${idx + 1}:${w}`).join(' | ')}
+              <td colspan="6" style="padding:6px 12px 10px;border-bottom:1px solid #e5dec9;background-color:#fcf9f2;">
+                <div style="font-size:11px;font-weight:700;color:#8c491a;margin-bottom:3px;">
+                  ⚖️ बोरी तुलाई वजन (Bora Weights in kg):
+                </div>
+                <div style="line-height:1.6;">
+                  ${weights.map((w, idx) => `<span style="display:inline-block;background:#fff;border:1px solid #dcd3c4;border-radius:4px;padding:2px 6px;margin:2px 3px;font-size:11px;font-weight:600;">#${idx + 1}: <strong>${w} kg</strong></span>`).join('')}
+                </div>
               </td>
             </tr>
           ` : ''}
@@ -325,54 +379,139 @@ export default function SethScreen() {
       }).join('');
 
       const html = `
+        <!DOCTYPE html>
         <html>
         <head>
+          <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Mandi Ledger - Seth Settlement Voucher</title>
           <style>
-            body { font-family: -apple-system, sans-serif; padding: 24px; color: #201e1d; line-height: 1.4; }
-            .header { text-align: center; border-bottom: 2px solid #c67139; padding-bottom: 12px; margin-bottom: 16px; }
-            .title { font-size: 24px; font-weight: bold; color: #b2622d; margin-bottom: 4px; }
-            .meta { display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 13px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-            th { background: #f5ead8; padding: 8px; text-align: left; font-size: 12px; }
-            .total-box { margin-left: auto; width: 280px; background: #fff9f0; border: 1px solid #dcd3c4; padding: 12px; border-radius: 8px; }
-            .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
-            .bold { font-weight: bold; font-size: 16px; color: #b2622d; border-top: 1px solid #ccc; padding-top: 6px; }
+            @page { size: A4 portrait; margin: 12mm; }
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #201e1d; margin: 0; padding: 20px; background: #ffffff; font-size: 13px; line-height: 1.4; }
+            .voucher-card { max-width: 800px; margin: 0 auto; border: 2px solid #8c491a; border-radius: 12px; padding: 24px; background: #ffffff; }
+            .header-table { width: 100%; border-bottom: 2px solid #8c491a; padding-bottom: 14px; margin-bottom: 16px; }
+            .shop-title { font-size: 24px; font-weight: 800; color: #8c491a; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .shop-sub { font-size: 12px; color: #645c50; margin: 2px 0; }
+            .badge-paid { display: inline-block; background: #eef5e4; border: 1.5px solid #56633f; color: #3a4a28; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; text-align: center; text-transform: uppercase; }
+            .badge-unsettled { display: inline-block; background: #fde8e4; border: 1.5px solid #9c2a1c; color: #9c2a1c; padding: 6px 14px; border-radius: 6px; font-weight: 800; font-size: 12px; text-align: center; }
+            .info-box { display: flex; justify-content: space-between; background: #f9f4ed; border: 1px solid #dcd3c4; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; }
+            .info-col { width: 48%; }
+            .info-row { display: flex; margin-bottom: 4px; font-size: 13px; }
+            .info-lbl { width: 120px; font-weight: 600; color: #645c50; }
+            .info-val { flex: 1; font-weight: 700; color: #201e1d; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .items-table th { background: #8c491a; color: #ffffff; padding: 9px 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            .summary-wrap { display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 24px; }
+            .summary-card { width: 340px; background: #f9f4ed; border: 1.5px solid #dcd3c4; border-radius: 8px; padding: 14px 16px; }
+            .sum-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13.5px; color: #474238; }
+            .sum-row.total-bold { border-top: 2px solid #8c491a; padding-top: 8px; margin-top: 6px; font-size: 15.5px; font-weight: 800; color: #8c491a; }
+            .sum-row.paid-bold { border-top: 1px solid #aebf92; padding-top: 6px; margin-top: 4px; font-size: 14px; font-weight: 700; color: #56633f; }
+            .footer-sig { display: flex; justify-content: space-between; margin-top: 36px; padding-top: 14px; border-top: 1px dashed #c0b6a5; }
+            .sig-box { width: 200px; text-align: center; font-size: 12px; color: #645c50; }
+            .sig-line { border-top: 1px solid #201e1d; margin-top: 40px; padding-top: 4px; font-weight: 600; }
           </style>
         </head>
         <body>
-          <div class="header">
-            <div class="title">सेठ हिसाब व थोक आवक पर्ची</div>
-            <div>Mandi Ledger B2B Wholesale Consignment</div>
-          </div>
-          <div class="meta">
-            <div>
-              <strong>सेठ का नाम:</strong> ${c.sethName}<br/>
-              ${c.sethPhone ? `<strong>फोन:</strong> ${c.sethPhone}<br/>` : ''}
-            </div>
-            <div style="text-align:right;">
-              <strong>दिनांक:</strong> ${longDate(new Date(c.receivedAt))}<br/>
-              <strong>स्थिति:</strong> ${c.status}
-            </div>
-          </div>
-          <table>
-            <thead>
+          <div class="voucher-card">
+            <!-- Header -->
+            <table class="header-table">
               <tr>
-                <th>#</th><th>सामान</th><th style="text-align:center;">बोरा</th>
-                <th style="text-align:right;">कुल वजन</th><th style="text-align:right;">भाव (₹/kg)</th>
-                <th style="text-align:right;">रकम</th>
+                <td style="vertical-align:top;">
+                  <div class="shop-title">${shop?.name || 'Mandi Ledger'}</div>
+                  <div class="shop-sub">${[shop?.address, shop?.phone ? `फोन: ${shop.phone}` : ''].filter(Boolean).join(' · ')}</div>
+                  <div style="font-size:15px;font-weight:700;color:#201e1d;margin-top:6px;">थोक आवक व अंतिम हिसाब पर्ची</div>
+                </td>
+                <td style="vertical-align:top;text-align:right;">
+                  <div class="${isSettled ? 'badge-paid' : 'badge-unsettled'}">
+                    ${isSettled ? '✅ PAID & SETTLED (चुकता)' : '⏳ PAYMENT DUE (बाकी)'}
+                  </div>
+                  <div style="font-size:11.5px;color:#645c50;margin-top:8px;">
+                    आवक दिनांक: <strong>${arrivalDateStr}</strong><br/>
+                    ${isSettled ? `चुकता दिनांक: <strong>${settledDateStr}</strong>` : ''}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <div class="total-box">
-            <div class="row"><span>कुल माल (Gross):</span><span>₹${rs(c.grossAmountPaise)}</span></div>
-            ${c.advancePaise > 0 ? `<div class="row" style="color:#c67139;"><span>अग्रिम (Advance):</span><span>-₹${rs(c.advancePaise)}</span></div>` : ''}
-            ${c.deductionsPaise > 0 ? `<div class="row"><span>कटौती / भाड़ा:</span><span>-₹${rs(c.deductionsPaise)}</span></div>` : ''}
-            <div class="row bold"><span>अंतिम देय राशि:</span><span>₹${rs(c.netPayablePaise)}</span></div>
-            ${c.status === 'SETTLED' ? `<div class="row" style="color:#56633f;margin-top:6px;"><span>भुगतान किया:</span><span>₹${rs(c.paidPaise)} (${c.paymentMode})</span></div>` : ''}
+            </table>
+
+            <!-- Seth & Settlement Details -->
+            <div class="info-box">
+              <div class="info-col">
+                <div class="info-row"><span class="info-lbl">सेठ / व्यापारी:</span><span class="info-val">${c.sethName}</span></div>
+                <div class="info-row"><span class="info-lbl">फोन नंबर:</span><span class="info-val">${c.sethPhone || '—'}</span></div>
+              </div>
+              <div class="info-col">
+                <div class="info-row"><span class="info-lbl">भुगतान स्थिति:</span><span class="info-val" style="color:${isSettled ? '#56633f' : '#b2622d'}">${isSettled ? 'पूर्णतः चुकता' : 'भुगतान बाकी'}</span></div>
+                ${isSettled ? `<div class="info-row"><span class="info-lbl">भुगतान माध्यम:</span><span class="info-val">${c.paymentMode}</span></div>` : ''}
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width:6%;text-align:center;">#</th>
+                  <th style="width:32%;text-align:left;">सामान / विवरण</th>
+                  <th style="width:12%;text-align:center;">कुल बोरा</th>
+                  <th style="width:18%;text-align:right;">कुल वजन</th>
+                  <th style="width:14%;text-align:right;">भाव (₹/kg)</th>
+                  <th style="width:18%;text-align:right;">रकम (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <!-- Calculation Voucher Summary -->
+            <div class="summary-wrap">
+              <div class="summary-card">
+                <div class="sum-row">
+                  <span>कुल माल की कीमत (Gross):</span>
+                  <span style="font-weight:700;">₹${rs(c.grossAmountPaise)}</span>
+                </div>
+                ${c.advancePaise > 0 ? `
+                  <div class="sum-row" style="color:#8c491a;">
+                    <span>(-) अग्रिम भुगतान (Advance):</span>
+                    <span style="font-weight:700;">-₹${rs(c.advancePaise)}</span>
+                  </div>
+                ` : ''}
+                ${c.deductionsPaise > 0 ? `
+                  <div class="sum-row" style="color:#645c50;">
+                    <span>(-) अन्य कटौती / भाड़ा:</span>
+                    <span style="font-weight:700;">-₹${rs(c.deductionsPaise)}</span>
+                  </div>
+                ` : ''}
+                <div class="sum-row total-bold">
+                  <span>अंतिम देय राशि (Net Due):</span>
+                  <span>₹${rs(c.netPayablePaise)}</span>
+                </div>
+                ${isSettled ? `
+                  <div class="sum-row paid-bold">
+                    <span>(✓) भुगतान किया (Paid):</span>
+                    <span>₹${rs(c.paidPaise)} (${c.paymentMode})</span>
+                  </div>
+                  <div class="sum-row" style="font-size:12px;color:#56633f;font-weight:bold;margin-top:2px;">
+                    <span>बकाया राशि (Balance):</span>
+                    <span>₹0.00 (पूर्ण चुकता)</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Signature Lines -->
+            <div class="footer-sig">
+              <div class="sig-box">
+                <div class="sig-line">सेठ / सप्लायर हस्ताक्षर</div>
+              </div>
+              <div class="sig-box">
+                <div class="sig-line">अधिकृत हस्ताक्षर (Mandi Ledger)</div>
+              </div>
+            </div>
+
+            <div style="text-align:center;font-size:11px;color:#82796a;margin-top:20px;">
+              यह कंप्यूटर जनरेटेड वैध हिसाब पर्ची है। धन्यवाद!
+            </div>
           </div>
         </body>
         </html>
@@ -1046,6 +1185,90 @@ export default function SethScreen() {
           onPress={handleConfirmSettle}
         />
       </Sheet>
+
+      {/* ── MODAL 4: POST-SETTLEMENT SUCCESS & AUTO SHARE/PRINT POPUP ── */}
+      <Sheet visible={openPostSettle && Boolean(selectedConsignment)} onClose={() => setOpenPostSettle(false)}>
+        {selectedConsignment && (
+          <View style={{ alignItems: 'center', paddingVertical: 4 }}>
+            {/* Green Success Badge */}
+            <View style={styles.successIconCircle}>
+              <Txt size={28}>✅</Txt>
+            </View>
+
+            <Txt heading size={21} style={{ textAlign: 'center', marginBottom: 4 }}>
+              {t('Settlement Completed!', 'हिसाब पूर्णतः चुकता हुआ!')}
+            </Txt>
+            <Txt size={12.5} color={C.n700} style={{ textAlign: 'center', marginBottom: 16 }}>
+              {selectedConsignment.sethName} {t('payment recorded successfully. Share or download PDF voucher below:', 'का भुगतान दर्ज हो चुका है। नीचे दिए बटन से WhatsApp पर भेजें या PDF पर्ची डाउनलोड करें:')}
+            </Txt>
+
+            {/* Quick Summary Card */}
+            <View style={styles.settleSummaryBox}>
+              <View style={styles.settleSummaryRow}>
+                <Txt size={12.5} color={C.n700}>{t('Seth Name', 'सेठ का नाम')}:</Txt>
+                <Txt size={13} weight={700}>{selectedConsignment.sethName}</Txt>
+              </View>
+
+              <View style={styles.settleSummaryRow}>
+                <Txt size={12.5} color={C.n700}>{t('Gross Goods Total', 'कुल माल (Gross)')}:</Txt>
+                <Txt size={13} weight={700}>₹{rs(selectedConsignment.grossAmountPaise)}</Txt>
+              </View>
+
+              {selectedConsignment.advancePaise > 0 && (
+                <View style={styles.settleSummaryRow}>
+                  <Txt size={12.5} color={C.a700}>{t('Advance Paid', 'अग्रिम कटौती')}:</Txt>
+                  <Txt size={13} weight={700} color={C.a700}>-₹{rs(selectedConsignment.advancePaise)}</Txt>
+                </View>
+              )}
+
+              {selectedConsignment.deductionsPaise > 0 && (
+                <View style={styles.settleSummaryRow}>
+                  <Txt size={12.5} color={C.n700}>{t('Other Deductions', 'अन्य कटौती / भाड़ा')}:</Txt>
+                  <Txt size={13} weight={700} color={C.n700}>-₹{rs(selectedConsignment.deductionsPaise)}</Txt>
+                </View>
+              )}
+
+              <View style={[styles.settleSummaryRow, { borderTopWidth: 1, borderTopColor: C.divider, paddingTop: 8, marginTop: 4 }]}>
+                <Txt size={13.5} weight={700} color={C.g700}>{t('Paid Settlement', 'चुकाई गई शुद्ध रकम')}:</Txt>
+                <Txt heading size={18} color={C.g700}>
+                  ₹{rs(selectedConsignment.paidPaise)} ({selectedConsignment.paymentMode})
+                </Txt>
+              </View>
+
+              <View style={[styles.settleSummaryRow, { marginTop: 4 }]}>
+                <Txt size={11.5} color={C.g700} weight={600}>{t('Balance Due', 'बकाया रकम')}:</Txt>
+                <Txt size={12} weight={700} color={C.g700}>₹0.00 (पूर्ण चुकता / Settled)</Txt>
+              </View>
+            </View>
+
+            {/* Prominent Action Buttons */}
+            <View style={{ width: '100%', gap: 10 }}>
+              <Btn
+                variant="plain"
+                label={t('🟢 Share Slip on WhatsApp', '🟢 WhatsApp पर पूरी पर्ची भेजें')}
+                onPress={() => handleShareWhatsApp(selectedConsignment)}
+                style={{ backgroundColor: '#25D366', paddingVertical: 14 }}
+                textStyle={{ color: C.white, fontWeight: '700', fontSize: 15 }}
+              />
+
+              <Btn
+                variant="secondary"
+                label={t('📄 View & Print PDF Voucher', '📄 PDF हिसाब पर्ची देखें व डाउनलोड करें')}
+                onPress={() => handlePrintParchi(selectedConsignment)}
+                style={{ backgroundColor: C.surface, borderColor: C.a700, borderWidth: 1.5, paddingVertical: 14 }}
+                textStyle={{ color: C.a700, fontWeight: '700', fontSize: 15 }}
+              />
+
+              <Btn
+                variant="plain"
+                label={t('Done / Close', 'सम्पन्न / बंद करें')}
+                onPress={() => setOpenPostSettle(false)}
+                style={{ marginTop: 2 }}
+              />
+            </View>
+          </View>
+        )}
+      </Sheet>
     </Screen>
   );
 }
@@ -1215,6 +1438,31 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   voucherRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 3,
+  },
+  successIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#eef5e4',
+    borderWidth: 2,
+    borderColor: '#56633f',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  settleSummaryBox: {
+    width: '100%',
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.divider,
+    borderRadius: R.md,
+    padding: 14,
+    marginBottom: 18,
+  },
+  settleSummaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 3,
