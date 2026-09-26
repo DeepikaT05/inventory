@@ -30,10 +30,8 @@ interface WeightItemDraft {
 const PRESET_VEGGIES = [
   { name: 'आलू (Aaloo)', en: 'Aaloo', color: '#b2622d' },
   { name: 'प्याज (Pyaaz)', en: 'Pyaaz', color: '#9c2a1c' },
-  { name: 'लहसुन (Lehsun)', en: 'Lehsun', color: '#645c50' },
   { name: 'अदरक (Adrak)', en: 'Adrak', color: '#c67139' },
-  { name: 'टमाटर (Tamatar)', en: 'Tamatar', color: '#d64527' },
-  { name: 'हरी मिर्च (Mirch)', en: 'Hari Mirch', color: '#56633f' },
+  { name: 'लहसुन (Lehsun)', en: 'Lehsun', color: '#645c50' },
 ];
 
 export default function SethScreen() {
@@ -41,7 +39,6 @@ export default function SethScreen() {
   const run = useAction();
 
   const [data, setData] = useState<SethResponse | null>(null);
-  const [knownSeths, setKnownSeths] = useState<{ sethName: string; sethPhone: string }[]>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_STOCK' | 'STOCK_SOLD' | 'SETTLED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -56,10 +53,6 @@ export default function SethScreen() {
   // Form State for New Consignment
   const [formSethName, setFormSethName] = useState('');
   const [formSethPhone, setFormSethPhone] = useState('');
-  const [formChallanNo, setFormChallanNo] = useState('');
-  const [formNote, setFormNote] = useState('');
-  const [advanceMode, setAdvanceMode] = useState<'PERCENT' | 'FIXED'>('PERCENT');
-  const [formAdvancePercent, setFormAdvancePercent] = useState('20'); // default 20% as requested!
   const [formAdvanceAmount, setFormAdvanceAmount] = useState('');
   const [formDeductions, setFormDeductions] = useState('');
   const [formAddToStock, setFormAddToStock] = useState(true);
@@ -69,41 +62,24 @@ export default function SethScreen() {
   const [customItemName, setCustomItemName] = useState('');
 
   const loadData = useCallback(() => run(async () => {
-    const [res, names] = await Promise.all([
-      api.seth({ status: statusFilter === 'ALL' ? undefined : statusFilter, seth: searchQuery }),
-      api.sethNames(),
-    ]);
+    const res = await api.seth({
+      status: statusFilter === 'ALL' ? undefined : statusFilter,
+      seth: searchQuery,
+    });
     setData(res);
-    setKnownSeths(names);
   }), [run, statusFilter, searchQuery]);
 
   useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
-  // Initialize draft when opening modal
+  // Open fresh blank form
   const handleOpenNewLot = () => {
     setFormSethName('');
     setFormSethPhone('');
-    setFormChallanNo('');
-    setFormNote('');
-    setAdvanceMode('PERCENT');
-    setFormAdvancePercent('20'); // 20% advance shortcut default
     setFormAdvanceAmount('');
     setFormDeductions('');
     setFormAddToStock(true);
     setCustomItemName('');
-
-    // Prepopulate with Aaloo draft as an initial starter
-    setItemDrafts([
-      {
-        id: 'draft-1',
-        name: 'आलू (Aaloo)',
-        color: '#b2622d',
-        boraCount: 30,
-        ratePerKgText: '18',
-        weights: [],
-        weightInputText: '',
-      },
-    ]);
+    setItemDrafts([]);
     setOpenNew(true);
   };
 
@@ -116,7 +92,7 @@ export default function SethScreen() {
         name,
         color,
         boraCount: 10,
-        ratePerKgText: '20',
+        ratePerKgText: '',
         weights: [],
         weightInputText: '',
       },
@@ -169,7 +145,6 @@ export default function SethScreen() {
     if (item.weights.length > 0) {
       totalKg = item.weights.reduce((a, b) => a + b, 0);
     } else {
-      // fallback estimate: boraCount * 50kg if no individual weights entered yet
       totalKg = item.boraCount * 50;
     }
     const rateKg = parseFloat(item.ratePerKgText) || 0;
@@ -190,14 +165,7 @@ export default function SethScreen() {
       totalKgAll += stats.totalKg;
     });
 
-    let advanceAmount = 0;
-    const pct = parseFloat(formAdvancePercent) || 0;
-    if (advanceMode === 'PERCENT') {
-      advanceAmount = Math.round((grossAmount * pct) / 100);
-    } else {
-      advanceAmount = parseFloat(formAdvanceAmount) || 0;
-    }
-
+    const advanceAmount = parseFloat(formAdvanceAmount) || 0;
     const deductions = parseFloat(formDeductions) || 0;
     const netPayable = Math.max(0, grossAmount - advanceAmount - deductions);
 
@@ -205,12 +173,11 @@ export default function SethScreen() {
       grossAmount,
       totalBore,
       totalKgAll,
-      advancePercent: pct,
       advanceAmount,
       deductions,
       netPayable,
     };
-  }, [itemDrafts, advanceMode, formAdvancePercent, formAdvanceAmount, formDeductions]);
+  }, [itemDrafts, formAdvanceAmount, formDeductions]);
 
   // Submit New Consignment
   const handleSaveConsignment = () => run(async () => {
@@ -238,9 +205,9 @@ export default function SethScreen() {
     await api.createSethConsignment({
       sethName: formSethName.trim(),
       sethPhone: formSethPhone.trim(),
-      challanNo: formChallanNo.trim(),
-      note: formNote.trim(),
-      advancePercent: advanceMode === 'PERCENT' ? parseFloat(formAdvancePercent) || 0 : 0,
+      challanNo: '',
+      note: '',
+      advancePercent: 0,
       advancePaise: Math.round(draftCalculation.advanceAmount * 100),
       deductionsPaise: Math.round(draftCalculation.deductions * 100),
       addToStock: formAddToStock,
@@ -297,7 +264,6 @@ export default function SethScreen() {
       `* मंडी लेजर — सेठ हिसाब पर्ची *`,
       `*सेठ:* ${c.sethName} ${c.sethPhone ? `(${c.sethPhone})` : ''}`,
       `*दिनांक:* ${longDate(new Date(c.receivedAt))}`,
-      c.challanNo ? `*चालान / गाड़ी:* ${c.challanNo}` : '',
       `━━━━━━━━━━━━━━━━━━━`,
       `*सामान व बोरा विवरण:*`,
     ];
@@ -316,7 +282,7 @@ export default function SethScreen() {
     lines.push(`━━━━━━━━━━━━━━━━━━━`);
     lines.push(`*कुल माल (Gross):* ₹${rs(c.grossAmountPaise)}`);
     if (c.advancePaise > 0) {
-      lines.push(`*अग्रिम भुगतान (${c.advancePercent ? `${c.advancePercent}%` : 'Advance'}):* -₹${rs(c.advancePaise)}`);
+      lines.push(`*अग्रिम भुगतान (Advance):* -₹${rs(c.advancePaise)}`);
     }
     if (c.deductionsPaise > 0) {
       lines.push(`*मंडी कटौती / भाड़ा:* -₹${rs(c.deductionsPaise)}`);
@@ -383,7 +349,6 @@ export default function SethScreen() {
             <div>
               <strong>सेठ का नाम:</strong> ${c.sethName}<br/>
               ${c.sethPhone ? `<strong>फोन:</strong> ${c.sethPhone}<br/>` : ''}
-              ${c.challanNo ? `<strong>चालान/गाड़ी:</strong> ${c.challanNo}` : ''}
             </div>
             <div style="text-align:right;">
               <strong>दिनांक:</strong> ${longDate(new Date(c.receivedAt))}<br/>
@@ -404,7 +369,7 @@ export default function SethScreen() {
           </table>
           <div class="total-box">
             <div class="row"><span>कुल माल (Gross):</span><span>₹${rs(c.grossAmountPaise)}</span></div>
-            ${c.advancePaise > 0 ? `<div class="row" style="color:#c67139;"><span>अग्रिम (Advance ${c.advancePercent ? `${c.advancePercent}%` : ''}):</span><span>-₹${rs(c.advancePaise)}</span></div>` : ''}
+            ${c.advancePaise > 0 ? `<div class="row" style="color:#c67139;"><span>अग्रिम (Advance):</span><span>-₹${rs(c.advancePaise)}</span></div>` : ''}
             ${c.deductionsPaise > 0 ? `<div class="row"><span>कटौती / भाड़ा:</span><span>-₹${rs(c.deductionsPaise)}</span></div>` : ''}
             <div class="row bold"><span>अंतिम देय राशि:</span><span>₹${rs(c.netPayablePaise)}</span></div>
             ${c.status === 'SETTLED' ? `<div class="row" style="color:#56633f;margin-top:6px;"><span>भुगतान किया:</span><span>₹${rs(c.paidPaise)} (${c.paymentMode})</span></div>` : ''}
@@ -439,7 +404,7 @@ export default function SethScreen() {
 
         <View style={[styles.kpiCard, { flex: 1 }]}>
           <Txt size={11} color={C.n700} weight={600} hi={lang === 'hi'}>
-            {t('Advance Given (20%)', 'दिया गया अग्रिम')}
+            {t('Advance Given', 'दिया गया अग्रिम')}
           </Txt>
           <Txt heading size={18} color={C.text} style={{ marginVertical: 2 }}>
             ₹{rs(summary?.totalAdvancePaise ?? 0)}
@@ -516,7 +481,7 @@ export default function SethScreen() {
                     <View>
                       <Txt size={15} weight={700}>{c.sethName}</Txt>
                       <Txt size={11} color={C.n700}>
-                        {longDate(new Date(c.receivedAt))} {c.challanNo ? `· ${c.challanNo}` : ''}
+                        {longDate(new Date(c.receivedAt))}
                       </Txt>
                     </View>
                   </View>
@@ -554,7 +519,7 @@ export default function SethScreen() {
                   {c.advancePaise > 0 && (
                     <View>
                       <Txt size={10.5} color={C.a700}>
-                        {t('Advance', 'अग्रिम')} {c.advancePercent ? `(${c.advancePercent}%)` : ''}
+                        {t('Advance', 'अग्रिम')}
                       </Txt>
                       <Txt size={13} weight={600} color={C.a700}>-₹{rs(c.advancePaise)}</Txt>
                     </View>
@@ -607,7 +572,7 @@ export default function SethScreen() {
       )}
 
       {/* ═════════════════════════════════════════════════════════════════════════════ */}
-      {/* ── MODAL 1: NEW BULK CONSIGNMENT (नया माल, अलग-अलग बोरा तुलाई व 20% अग्रिम) ── */}
+      {/* ── MODAL 1: NEW BULK CONSIGNMENT (नया माल आवक व तुलाई हिसाब) ── */}
       {/* ═════════════════════════════════════════════════════════════════════════════ */}
       <Sheet visible={openNew} onClose={() => setOpenNew(false)}>
         <Txt heading size={20} style={{ marginBottom: 4 }}>
@@ -619,55 +584,26 @@ export default function SethScreen() {
 
         {/* ── SETH DETAILS ── */}
         <Kicker en="1. Seth / Supplier Details" hi="1. सेठ / व्यापारी विवरण" />
-        
-        {/* Quick select existing seth chips */}
-        {knownSeths.length > 0 && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-            {knownSeths.slice(0, 5).map((ks) => (
-              <Chip
-                key={ks.sethName}
-                label={ks.sethName}
-                on={formSethName === ks.sethName}
-                onPress={() => {
-                  setFormSethName(ks.sethName);
-                  if (ks.sethPhone) setFormSethPhone(ks.sethPhone);
-                }}
-              />
-            ))}
-          </View>
-        )}
 
         <Field
-          label={t('Seth / Vyapari Name *', 'सेठ का नाम (जैसे: ABC Seth) *')}
-          placeholder="e.g. ABC Seth"
+          label={t('Seth / Vyapari Name *', 'सेठ / व्यापारी का नाम *')}
+          placeholder={t('Enter Seth name', 'सेठ का नाम दर्ज करें')}
           value={formSethName}
           onChangeText={setFormSethName}
         />
 
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={{ flex: 1 }}>
-            <Field
-              label={t('Phone (Optional)', 'फोन नंबर')}
-              placeholder="e.g. 9876543210"
-              keyboardType="phone-pad"
-              value={formSethPhone}
-              onChangeText={setFormSethPhone}
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Field
-              label={t('Challan / Gaddi No.', 'चालान / गाड़ी नंबर')}
-              placeholder="e.g. CH-902 / RJ-14"
-              value={formChallanNo}
-              onChangeText={setFormChallanNo}
-            />
-          </View>
-        </View>
+        <Field
+          label={t('Phone (Optional)', 'फोन नंबर (ऐच्छिक)')}
+          placeholder="e.g. 9876543210"
+          keyboardType="phone-pad"
+          value={formSethPhone}
+          onChangeText={setFormSethPhone}
+        />
 
         {/* ── ITEMS & VARIABLE BORA WEIGHTS ── */}
         <Kicker en="2. Commodities & Variable Bora Weights" hi="2. सामान व अलग-अलग बोरा वजन (तुलाई)" style={{ marginTop: 10 }} />
         
-        {/* Preset quick item selector chips */}
+        {/* Preset quick item selector chips (only Aaloo, Pyaaz, Adrak, Lehsun) */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
           {PRESET_VEGGIES.map((v) => {
             const isAdded = itemDrafts.some((d) => d.name === v.name || d.name === v.en);
@@ -708,6 +644,15 @@ export default function SethScreen() {
             style={{ paddingHorizontal: 14 }}
           />
         </View>
+
+        {/* Prompt when no items added yet */}
+        {itemDrafts.length === 0 && (
+          <View style={styles.emptyItemsPrompt}>
+            <Txt size={12.5} color={C.n700} style={{ textAlign: 'center' }}>
+              {t('Tap above on आलू, प्याज, अदरक or लहसुन to add items and enter bag weights.', 'सामान जोड़ने के लिए ऊपर आलू, प्याज, अदरक या लहसुन पर टैप करें।')}
+            </Txt>
+          </View>
+        )}
 
         {/* Draft Items List */}
         <View style={{ gap: 12, marginBottom: 16 }}>
@@ -839,89 +784,54 @@ export default function SethScreen() {
           })}
         </View>
 
-        {/* ── ADVANCE & DEDUCTIONS (20% ADVANCE) ── */}
-        <Kicker en="3. Advance Payment & Final Settlement" hi="3. अग्रिम भुगतान (20%) व अंतिम हिसाब" />
+        {/* ── ADVANCE & DEDUCTIONS (DIRECT AMOUNT) ── */}
+        <Kicker en="3. Advance Payment & Final Settlement" hi="3. अग्रिम भुगतान व अंतिम हिसाब" />
         <View style={styles.advanceCard}>
           {/* Gross Total Row */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-            <Txt size={13} weight={600}>{t('Gross Goods Total', 'सभी सामान का कुल योग:')}</Txt>
-            <Txt heading size={18}>₹{rs(draftCalculation.grossAmount * 100)}</Txt>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: C.divider }}>
+            <Txt size={13.5} weight={600}>{t('Gross Goods Total', 'कुल माल की कीमत (Gross):')}</Txt>
+            <Txt heading size={19}>₹{rs(draftCalculation.grossAmount * 100)}</Txt>
           </View>
 
-          {/* Advance % shortcuts */}
-          <Txt size={11} color={C.n700} weight={600} style={{ marginBottom: 6 }}>
-            {t('Advance Payment Shortcut', 'अग्रिम भुगतान चुनें (जैसे 20%):')}
-          </Txt>
-          <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
-            {[
-              { label: '20% (अनुशंसित)', val: '20' },
-              { label: '10%', val: '10' },
-              { label: '25%', val: '25' },
-              { label: '50%', val: '50' },
-              { label: '0%', val: '0' },
-            ].map((p) => {
-              const on = advanceMode === 'PERCENT' && formAdvancePercent === p.val;
-              return (
-                <Pressable
-                  key={p.val}
-                  onPress={() => {
-                    setAdvanceMode('PERCENT');
-                    setFormAdvancePercent(p.val);
-                  }}
-                  style={[styles.percentBtn, on && styles.percentBtnActive]}
-                >
-                  <Txt size={11} weight={700} color={on ? C.white : C.text}>
-                    {p.label}
-                  </Txt>
-                </Pressable>
-              );
-            })}
+          {/* Advance Amount (₹) */}
+          <View style={{ marginTop: 10 }}>
+            <Field
+              label={t('Advance Amount (₹)', 'अग्रिम भुगतान राशि (₹ Advance Paid)')}
+              placeholder="e.g. 5000"
+              keyboardType="numeric"
+              value={formAdvanceAmount}
+              onChangeText={setFormAdvanceAmount}
+            />
           </View>
 
-          {/* Advance Amount Row */}
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
-            <View style={{ flex: 1 }}>
-              <Txt size={11} color={C.n700}>{t('Advance %', 'अग्रिम प्रतिशत (%)')}</Txt>
-              <TextInput
-                keyboardType="numeric"
-                value={formAdvancePercent}
-                onChangeText={(txt) => {
-                  setAdvanceMode('PERCENT');
-                  setFormAdvancePercent(txt);
-                }}
-                style={styles.inputMini}
-              />
-            </View>
-            <View style={{ flex: 1.3 }}>
-              <Txt size={11} color={C.a700} weight={700}>{t('Advance Amount (₹)', 'कटा अग्रिम (₹)')}</Txt>
-              <Txt heading size={16} color={C.a700} style={{ marginTop: 6 }}>
-                -₹{rs(draftCalculation.advanceAmount * 100)}
-              </Txt>
-            </View>
-          </View>
-
-          {/* Additional Mandi Deductions */}
+          {/* Other Deductions (₹) */}
           <Field
-            label={t('Other Deductions / Bhada / Tulai (₹ Optional)', 'अन्य कटौती / गाड़ी भाड़ा / तुलाई (₹ ऐच्छिक)')}
+            label={t('Other Deductions / Bhada / Tulai (₹ Optional)', 'अन्य कटौती (गाड़ी भाड़ा / हम्माली / तुलाई) (₹ ऐच्छिक)')}
             placeholder="e.g. 500"
             keyboardType="numeric"
             value={formDeductions}
             onChangeText={setFormDeductions}
           />
 
-          {/* Final Net Payable Highlight */}
+          {/* Final Net Payable Highlight Box - Beautifully Aligned & No Clipping */}
           <View style={styles.netHighlightBox}>
-            <View>
-              <Txt size={11} color={C.a700} weight={700} hi={lang === 'hi'}>
-                {t('Final Balance to Pay Seth at Settlement', 'अंतिम देय राशि (हिसाब चुकता करते समय):')}
+            <View style={{ marginBottom: 8 }}>
+              <Txt size={13} weight={700} color={C.a800} hi={lang === 'hi'}>
+                {t('Final Balance to Pay Seth at Settlement', 'सेठ को देने योग्य अंतिम शुद्ध हिसाब')}
               </Txt>
-              <Txt size={10} color={C.n700}>
-                {t('Goods Sold Settlement = Gross - 20% Advance - Deductions', 'सामान बिकने के बाद देने योग्य शुद्ध रकम')}
+              <Txt size={11} color={C.n700} style={{ marginTop: 2 }}>
+                {t('Calculation: Gross Goods − Advance Paid − Other Deductions', 'हिसाब = कुल माल − अग्रिम भुगतान − अन्य कटौती')}
               </Txt>
             </View>
-            <Txt heading size={22} color={C.a700}>
-              ₹{rs(draftCalculation.netPayable * 100)}
-            </Txt>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(198, 113, 57, 0.35)' }}>
+              <Txt size={13.5} weight={700} color={C.a800}>
+                {t('Total Amount to Pay:', 'अंतिम कुल देय राशि:')}
+              </Txt>
+              <Txt heading size={24} color={C.a700}>
+                ₹{rs(draftCalculation.netPayable * 100)}
+              </Txt>
+            </View>
           </View>
         </View>
 
@@ -957,7 +867,7 @@ export default function SethScreen() {
               <View>
                 <Txt heading size={20}>{selectedConsignment.sethName}</Txt>
                 <Txt size={12} color={C.n700}>
-                  {longDate(new Date(selectedConsignment.receivedAt))} {selectedConsignment.challanNo ? `· ${selectedConsignment.challanNo}` : ''}
+                  {longDate(new Date(selectedConsignment.receivedAt))}
                 </Txt>
               </View>
 
@@ -1026,7 +936,7 @@ export default function SethScreen() {
               {selectedConsignment.advancePaise > 0 && (
                 <View style={styles.voucherRow}>
                   <Txt size={13} color={C.a700}>
-                    {t('Advance Paid', 'अग्रिम भुगतान')} {selectedConsignment.advancePercent ? `(${selectedConsignment.advancePercent}%)` : ''}:
+                    {t('Advance Paid', 'अग्रिम भुगतान')}:
                   </Txt>
                   <Txt size={14} weight={700} color={C.a700}>
                     -₹{rs(selectedConsignment.advancePaise)}
@@ -1107,7 +1017,7 @@ export default function SethScreen() {
           {t('Record Settlement Payment', 'सेठ को अंतिम भुगतान दर्ज करें')}
         </Txt>
         <Txt size={12} color={C.n700} style={{ marginBottom: 12 }}>
-          {t('Pay remaining net balance after deducting 20% advance & expenses', '20% अग्रिम व कटौती घटाकर बाकी रकम चुकता करें')}
+          {t('Pay remaining net balance after deducting advance & expenses', 'अग्रिम व कटौती घटाकर बाकी रकम चुकता करें')}
         </Txt>
 
         <Field
@@ -1193,8 +1103,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.divider,
     borderRadius: R.md,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  emptyItemsPrompt: {
+    padding: 14,
+    backgroundColor: C.n100,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.divider,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   itemBox: {
     backgroundColor: C.n100,
@@ -1265,30 +1185,13 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
-  percentBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: C.n100,
-    borderWidth: 1,
-    borderColor: C.divider,
-    borderRadius: R.sm,
-    paddingVertical: 7,
-  },
-  percentBtnActive: {
-    backgroundColor: C.a700,
-    borderColor: C.a700,
-  },
   netHighlightBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     backgroundColor: C.a200,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: C.a400,
     borderRadius: R.md,
-    padding: 10,
-    marginTop: 10,
+    padding: 12,
+    marginTop: 12,
   },
   checkbox: {
     width: 20,
