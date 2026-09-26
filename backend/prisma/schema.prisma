@@ -1,0 +1,257 @@
+// Mandi Ledger — multi-store edition.
+// Conventions: weights are stored in grams (Int), money in paise (Int).
+// Rates are paise per kg.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentMode {
+  CASH
+  UPI
+  CREDIT
+}
+
+enum BillLanguage {
+  ENGLISH
+  HINDI
+  BOTH
+}
+
+enum KhataEntryType {
+  SALE     // udhaar bill added to the customer's balance
+  PAYMENT  // money received against the balance
+}
+
+enum StoreUserRole {
+  OWNER
+  STAFF
+}
+
+// ─── Single-Store APK Configuration ──────────────────────────────────────────
+
+model Shop {
+  id              Int          @id @default(1)
+  name            String
+  ownerName       String       @default("")
+  address         String       @default("")
+  phone           String       @default("")
+  gstNote         String       @default("")
+  billLanguage    BillLanguage @default(BOTH)
+  lowStockGrams   Int          @default(25000)
+  printerEnabled  Boolean      @default(false)
+  printerName     String       @default("")
+  whatsappEnabled Boolean      @default(true)
+  lowStockAlert   Boolean      @default(true)
+  nextBillNo      Int          @default(1)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+// ─── Super-Admin ──────────────────────────────────────────────────────────────
+
+// The platform super-admin who can create/manage stores.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+
+// A store on the platform. Each store has its own isolated data.
+model Store {
+  id              String       @id @default(cuid())
+  name            String
+  ownerName       String       @default("")
+  address         String       @default("")
+  city            String       @default("")
+  phone           String       @default("")
+  gstNote         String       @default("")
+  billLanguage    BillLanguage @default(BOTH)
+  lowStockGrams   Int          @default(25000)
+  printerEnabled  Boolean      @default(false)
+  printerName     String       @default("")
+  whatsappEnabled Boolean      @default(true)
+  lowStockAlert   Boolean      @default(true)
+  nextBillNo      Int          @default(1)
+  active          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  users     StoreUser[]
+  items     Item[]
+  dealers   Dealer[]
+  arrivals  Arrival[]
+  customers Customer[]
+  bills     Bill[]
+}
+
+// ─── Store Users ──────────────────────────────────────────────────────────────
+
+model StoreUser {
+  id           String        @id @default(cuid())
+  storeId      String
+  store        Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name         String
+  email        String        @unique
+  passwordHash String
+  role         StoreUserRole @default(STAFF)
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([storeId])
+}
+
+// ─── Items ────────────────────────────────────────────────────────────────────
+
+model Item {
+  id                 String   @id @default(cuid())
+  storeId            String?
+  store              Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  nameEn             String
+  nameHi             String   @default("")
+  color              String   @default("#c67139")
+  sellRatePaise      Int
+  costRatePaise      Int      @default(0)
+  stockGrams         Int      @default(0)
+  capacityGrams      Int      @default(100000)
+  packetGrams        Int      @default(10000)
+  sortOrder          Int      @default(0)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  billLines    BillLine[]
+  arrivalLines ArrivalLine[]
+  rateChanges  RateChange[]
+
+  @@index([storeId])
+}
+
+model RateChange {
+  id            String   @id @default(cuid())
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  sellRatePaise Int
+  createdAt     DateTime @default(now())
+
+  @@index([itemId, createdAt])
+}
+
+// ─── Dealers ──────────────────────────────────────────────────────────────────
+
+model Dealer {
+  id        String    @id @default(cuid())
+  storeId   String?
+  store     Store?    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String    @default("")
+  createdAt DateTime  @default(now())
+  arrivals  Arrival[]
+
+  @@index([storeId])
+}
+
+// A consignment from a dealer.
+model Arrival {
+  id          String        @id @default(cuid())
+  storeId     String?
+  store       Store?        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  dealerId    String
+  dealer      Dealer        @relation(fields: [dealerId], references: [id])
+  slipNo      String        @default("")
+  note        String        @default("")
+  costPaise   Int
+  receivedAt  DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  lines       ArrivalLine[]
+
+  @@index([storeId, receivedAt])
+}
+
+model ArrivalLine {
+  id            String  @id @default(cuid())
+  arrivalId     String
+  arrival       Arrival @relation(fields: [arrivalId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          Item    @relation(fields: [itemId], references: [id])
+  packets       Int
+  gramsEach     Int
+  totalGrams    Int
+  costRatePaise Int
+  amountPaise   Int
+}
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+
+model Customer {
+  id           String       @id @default(cuid())
+  storeId      String?
+  store        Store?       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name         String
+  phone        String       @default("")
+  balancePaise Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  bills        Bill[]
+  entries      KhataEntry[]
+
+  @@index([storeId])
+}
+
+model KhataEntry {
+  id          String         @id @default(cuid())
+  customerId  String
+  customer    Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type        KhataEntryType
+  amountPaise Int
+  billId      String?        @unique
+  bill        Bill?          @relation(fields: [billId], references: [id])
+  note        String         @default("")
+  createdAt   DateTime       @default(now())
+
+  @@index([customerId, createdAt])
+}
+
+// ─── Bills ────────────────────────────────────────────────────────────────────
+
+model Bill {
+  id          String      @id @default(cuid())
+  storeId     String?
+  store       Store?      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  number      Int
+  paymentMode PaymentMode
+  customerId  String?
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  totalPaise  Int
+  totalGrams  Int
+  costPaise   Int
+  createdAt   DateTime    @default(now())
+  lines       BillLine[]
+  khataEntry  KhataEntry?
+
+  @@index([storeId, createdAt])
+  @@index([customerId, createdAt])
+}
+
+model BillLine {
+  id            String @id @default(cuid())
+  billId        String
+  bill          Bill   @relation(fields: [billId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          Item   @relation(fields: [itemId], references: [id])
+  grams         Int
+  ratePaise     Int
+  costRatePaise Int
+  amountPaise   Int
+}

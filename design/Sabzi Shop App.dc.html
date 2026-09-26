@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/organic-6989c930-ea9f-473e-8b2e-eea835de0615/styles.css">
+<script src="_ds/organic-6989c930-ea9f-473e-8b2e-eea835de0615/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap">
+<style>
+body{margin:0;background:var(--color-bg);font-family:var(--font-body)}
+a{color:var(--color-accent)}a:hover{color:var(--color-accent-700)}
+.hi{font-family:"Noto Sans Devanagari",var(--font-body)}
+.scr::-webkit-scrollbar{width:0}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;padding:36px 28px 60px;display:flex;gap:38px;align-items:flex-start;justify-content:center;flex-wrap:wrap">
+
+  <div style="display:flex;flex-direction:column;gap:16px;max-width:280px;padding-top:8px">
+    <div>
+      <div style="font-family:var(--font-heading);font-size:30px;line-height:1.08">Mandi Ledger</div>
+      <div style="font-size:13px;color:var(--color-neutral-700);margin-top:6px">Sales, stock and billing for a loose-weight onion, potato, garlic and ginger shop. Tap through the prototype — every screen is live.</div>
+    </div>
+    <div style="height:1px;background:var(--color-divider)"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="9">
+        <button class="btn" style="{{ j.style }}" onClick="{{ j.go }}">{{ j.label }}</button>
+      </sc-for>
+    </div>
+    <div style="height:1px;background:var(--color-divider)"></div>
+    <div style="font-size:12px;color:var(--color-neutral-700);line-height:1.6">
+      <div style="font-family:var(--font-heading);font-size:13px;color:var(--color-text);margin-bottom:6px">How it works</div>
+      Weights are entered in grams and shown in kg. Stock arrives as packets — each packet carries its own weight — and every consignment is filed under its dealer and date.
+    </div>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="402" height="874" hint-size="402px,874px">
+    <div style="height:100%;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);position:relative;overflow:hidden">
+
+      <div style="padding:58px 18px 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;background:var(--color-bg)">
+        <div style="min-width:0">
+          <div style="font-family:var(--font-heading);font-size:24px;line-height:1.05">{{ head }}</div>
+          <div class="hi" style="font-size:12.5px;color:var(--color-neutral-700);margin-top:2px">{{ headHi }}</div>
+        </div>
+        <div style="text-align:right;flex:none">
+          <div style="font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--color-neutral-600)">{{ today }}</div>
+          <div style="font-family:var(--font-heading);font-size:15px;color:var(--color-accent-700)">{{ shopName }}</div>
+        </div>
+      </div>
+
+      <div class="scr" style="flex:1;overflow-y:auto;padding:4px 18px 16px">
+
+        <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="background:var(--color-accent-700);color:var(--color-accent-100);border-radius:var(--radius-lg);padding:18px 20px 16px;box-shadow:var(--shadow-md)">
+              <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.8">Today's sale · <span class="hi">आज की बिक्री</span></div>
+              <div style="font-family:var(--font-heading);font-size:40px;line-height:1.1;color:#fff;margin-top:4px">₹{{ todayTotal }}</div>
+              <div style="display:flex;gap:18px;margin-top:12px;font-size:12.5px">
+                <div><div style="opacity:.75">Cash</div><div style="font-weight:700;color:#fff">₹{{ todayCash }}</div></div>
+                <div><div style="opacity:.75">UPI</div><div style="font-weight:700;color:#fff">₹{{ todayUpi }}</div></div>
+                <div><div style="opacity:.75">Udhaar</div><div style="font-weight:700;color:#fff">₹{{ todayCredit }}</div></div>
+                <div style="margin-left:auto;text-align:right"><div style="opacity:.75">Bills</div><div style="font-weight:700;color:#fff">{{ todayBills }}</div></div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+              <button class="btn" style="background:var(--color-accent);color:#fff;border-radius:var(--radius-md);padding:16px 14px;flex-direction:column;align-items:flex-start;gap:2px;font-size:16px" onClick="{{ goSale }}">
+                New sale
+                <span class="hi" style="font-family:var(--font-body);font-size:11.5px;opacity:.85">नई बिक्री</span>
+              </button>
+              <button class="btn" style="background:var(--color-accent-2-600);color:#fff;border-radius:var(--radius-md);padding:16px 14px;flex-direction:column;align-items:flex-start;gap:2px;font-size:16px" onClick="{{ goStock }}">
+                Stock in
+                <span class="hi" style="font-family:var(--font-body);font-size:11.5px;opacity:.85">माल आया</span>
+              </button>
+            </div>
+
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 8px">
+              <div style="font-family:var(--font-heading);font-size:17px">Today's rate <span class="hi" style="font-family:'Noto Sans Devanagari';font-size:12px;color:var(--color-neutral-700)">आज का भाव</span></div>
+              <button class="btn btn-ghost" style="font-size:12px" onClick="{{ goRates }}">Change</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:10px 12px;display:flex;align-items:center;gap:10px">
+                  <div style="width:10px;height:26px;border-radius:999px;background:{{ it.color }}"></div>
+                  <div style="min-width:0">
+                    <div style="font-size:13.5px;font-weight:600;line-height:1.2">{{ it.en }}</div>
+                    <div class="hi" style="font-size:11px;color:var(--color-neutral-700)">{{ it.hi }}</div>
+                  </div>
+                  <div style="margin-left:auto;font-family:var(--font-heading);font-size:16px">₹{{ it.rate }}</div>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin:20px 0 8px">
+              <div style="font-family:var(--font-heading);font-size:17px">Repeat customer <span class="hi" style="font-family:'Noto Sans Devanagari';font-size:12px;color:var(--color-neutral-700)">पुराना ऑर्डर</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <sc-for list="{{ recent }}" as="r" hint-placeholder-count="3">
+                <button class="btn" style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:11px 13px;justify-content:flex-start;gap:10px;width:100%;text-align:left" onClick="{{ r.repeat }}">
+                  <span style="width:32px;height:32px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);display:flex;align-items:center;justify-content:center;font-size:13px">{{ r.initial }}</span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-start;font-family:var(--font-body)">
+                    <span style="font-size:13.5px;font-weight:600">{{ r.name }}</span>
+                    <span style="font-size:11px;color:var(--color-neutral-700)">{{ r.summary }}</span>
+                  </span>
+                  <span style="margin-left:auto;font-family:var(--font-heading);font-size:12px;color:var(--color-accent-700)">Repeat</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="margin-top:20px;background:var(--color-accent-200);border-radius:var(--radius-md);padding:12px 14px;display:flex;gap:10px;align-items:center">
+              <div style="font-size:12.5px;color:var(--color-accent-900);line-height:1.4">
+                <b>{{ lowName }}</b> stock is low — {{ lowLeft }} left.
+                <span class="hi" style="display:block;font-size:11px;opacity:.8">स्टॉक कम है</span>
+              </div>
+              <button class="btn btn-primary" style="margin-left:auto;border-radius:999px;font-size:12px;padding:7px 14px;flex:none" onClick="{{ goStock }}">Order</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSale }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                <button class="btn" style="{{ it.tileStyle }}" onClick="{{ it.pick }}">
+                  <span style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;font-family:var(--font-body)">
+                    <span style="font-family:var(--font-heading);font-size:19px">{{ it.en }}</span>
+                    <span class="hi" style="font-size:12px;opacity:.8">{{ it.hi }}</span>
+                    <span style="font-size:11.5px;opacity:.75;margin-top:5px">₹{{ it.rate }}/kg · {{ it.stockLabel }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ hasCart }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);overflow:hidden">
+                <sc-for list="{{ cart }}" as="l" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--color-divider)">
+                    <div style="width:8px;height:22px;border-radius:999px;background:{{ l.color }}"></div>
+                    <div>
+                      <div style="font-size:13.5px;font-weight:600">{{ l.en }}</div>
+                      <div style="font-size:11px;color:var(--color-neutral-700)">{{ l.wt }} × ₹{{ l.rate }}/kg</div>
+                    </div>
+                    <div style="margin-left:auto;font-family:var(--font-heading);font-size:16px">₹{{ l.amt }}</div>
+                    <button class="btn btn-icon" style="width:26px;height:26px;border-radius:999px;color:var(--color-neutral-600);font-size:16px" onClick="{{ l.remove }}">×</button>
+                  </div>
+                </sc-for>
+                <div style="display:flex;align-items:center;padding:12px 13px;background:var(--color-surface)">
+                  <div>
+                    <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Total</div>
+                    <div class="hi" style="font-size:11px;color:var(--color-neutral-700)">कुल {{ cartWeight }}</div>
+                  </div>
+                  <div style="margin-left:auto;font-family:var(--font-heading);font-size:26px">₹{{ cartTotal }}</div>
+                </div>
+              </div>
+
+              <div style="margin-top:12px">
+                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:7px">Payment · <span class="hi">भुगतान</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                  <sc-for list="{{ payModes }}" as="p" hint-placeholder-count="3">
+                    <button class="btn" style="{{ p.style }}" onClick="{{ p.pick }}">{{ p.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+
+              <sc-if value="{{ isCredit }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:10px">
+                  <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:7px">Khata name</div>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap">
+                    <sc-for list="{{ khataChips }}" as="k" hint-placeholder-count="3">
+                      <button class="btn" style="{{ k.style }}" onClick="{{ k.pick }}">{{ k.name }}</button>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <button class="btn btn-primary btn-block" style="border-radius:999px;padding:15px;font-size:17px;margin-top:14px" onClick="{{ finish }}">Save bill · ₹{{ cartTotal }}</button>
+            </sc-if>
+
+            <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:18px;border:1px dashed var(--color-neutral-400);border-radius:var(--radius-md);padding:22px 16px;text-align:center;color:var(--color-neutral-700)">
+                <div style="font-size:13px">Tap an item to weigh it</div>
+                <div class="hi" style="font-size:12px;margin-top:3px">तौल के लिए सामान चुनें</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isBill }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="background:#fff;border-radius:var(--radius-md);padding:20px 18px;box-shadow:var(--shadow-md)">
+              <div style="text-align:center;border-bottom:1px dashed var(--color-neutral-400);padding-bottom:12px">
+                <div style="font-family:var(--font-heading);font-size:21px">{{ shopName }}</div>
+                <div style="font-size:11px;color:var(--color-neutral-700)">Sabzi Mandi Road · 98xxx 41207</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--color-neutral-700);padding:10px 0">
+                <span style="white-space:nowrap">Bill {{ bill.no }}</span><span style="white-space:nowrap">{{ bill.time }}, {{ today }}</span>
+              </div>
+              <sc-for list="{{ bill.lines }}" as="l" hint-placeholder-count="2">
+                <div style="display:flex;align-items:baseline;gap:8px;padding:6px 0;border-top:1px solid var(--color-divider)">
+                  <div style="font-size:13.5px;font-weight:600">{{ l.en }}</div>
+                  <div style="font-size:11.5px;color:var(--color-neutral-700);white-space:nowrap">{{ l.wt }} @ ₹{{ l.rate }}</div>
+                  <div style="margin-left:auto;font-size:14px">₹{{ l.amt }}</div>
+                </div>
+              </sc-for>
+              <div style="display:flex;align-items:center;border-top:2px solid var(--color-text);margin-top:8px;padding-top:10px">
+                <div style="font-family:var(--font-heading);font-size:15px">Total</div>
+                <div style="margin-left:auto;font-family:var(--font-heading);font-size:26px">₹{{ bill.total }}</div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--color-neutral-700);margin-top:6px">
+                <span>{{ bill.payLabel }}</span><span>{{ bill.who }}</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px">
+              <button class="btn" style="background:var(--color-accent-2-600);color:#fff;border-radius:999px;padding:13px" onClick="{{ share }}">Share on WhatsApp</button>
+              <button class="btn btn-secondary" style="border-radius:999px;padding:13px" onClick="{{ share }}">Print</button>
+            </div>
+            <button class="btn btn-primary btn-block" style="border-radius:999px;padding:14px;font-size:16px;margin-top:9px" onClick="{{ goSale }}">Next sale · <span class="hi" style="font-family:var(--font-body);font-size:13px">अगली बिक्री</span></button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isInv }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:13px 14px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:10px;height:30px;border-radius:999px;background:{{ it.color }}"></div>
+                    <div>
+                      <div style="font-size:15px;font-weight:700">{{ it.en }}</div>
+                      <div class="hi" style="font-size:11.5px;color:var(--color-neutral-700)">{{ it.hi }}</div>
+                    </div>
+                    <div style="margin-left:auto;text-align:right">
+                      <div style="font-family:var(--font-heading);font-size:20px">{{ it.stockKg }}</div>
+                      <div style="font-size:11px;color:var(--color-neutral-700)">{{ it.packets }} packets</div>
+                    </div>
+                  </div>
+                  <div style="height:6px;border-radius:999px;background:var(--color-neutral-300);margin-top:10px;overflow:hidden">
+                    <div style="height:100%;border-radius:999px;background:{{ it.color }};width:{{ it.barW }}"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--color-neutral-700);margin-top:6px">
+                    <span>Sold today {{ it.soldToday }}</span>
+                    <span>{{ it.lastIn }}</span>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+            <button class="btn btn-secondary btn-block" style="border-radius:999px;padding:13px;margin-top:12px" onClick="{{ goStock }}">See dealer consignments</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isStock }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <button class="btn btn-primary btn-block" style="border-radius:999px;padding:14px;font-size:16px;margin:0 0 14px" onClick="{{ openIn }}">+ New arrival · <span class="hi" style="font-family:var(--font-body);font-size:13px">नया माल</span></button>
+            <sc-for list="{{ days }}" as="d" hint-placeholder-count="2">
+              <div style="margin-bottom:18px">
+                <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                  <div style="font-family:var(--font-heading);font-size:14px">{{ d.label }}</div>
+                  <div style="flex:1;height:1px;background:var(--color-divider)"></div>
+                  <div style="font-size:11px;color:var(--color-neutral-700)">{{ d.total }}</div>
+                </div>
+                <sc-for list="{{ d.lots }}" as="c" hint-placeholder-count="2">
+                  <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:13px 14px;margin-bottom:9px">
+                    <div style="display:flex;align-items:center;gap:9px">
+                      <div style="width:30px;height:30px;border-radius:999px;background:var(--color-accent-2-300);color:var(--color-accent-2-800);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ c.initial }}</div>
+                      <div>
+                        <div style="font-size:14px;font-weight:700">{{ c.dealer }}</div>
+                        <div style="font-size:11px;color:var(--color-neutral-700)">{{ c.slip }}</div>
+                      </div>
+                      <div style="margin-left:auto;font-family:var(--font-heading);font-size:15px">₹{{ c.cost }}</div>
+                    </div>
+                    <div style="margin-top:9px;display:flex;flex-direction:column;gap:5px">
+                      <sc-for list="{{ c.rows }}" as="r" hint-placeholder-count="3">
+                        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+                          <span style="width:7px;height:7px;border-radius:999px;background:{{ r.color }}"></span>
+                          <span style="font-weight:600">{{ r.en }}</span>
+                          <span style="color:var(--color-neutral-700)">{{ r.packets }} packets × {{ r.each }}</span>
+                          <span style="margin-left:auto;font-weight:600">{{ r.total }}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isKhata }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="background:var(--color-accent-2-700);color:#fff;border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px">
+              <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.85">Outstanding · <span class="hi">बाकी</span></div>
+              <div style="font-family:var(--font-heading);font-size:34px;line-height:1.15">₹{{ khataTotal }}</div>
+              <div style="font-size:12px;opacity:.85">across {{ khataCount }} customers</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <sc-for list="{{ khata }}" as="k" hint-placeholder-count="4">
+                <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px 13px;display:flex;align-items:center;gap:11px">
+                  <div style="width:34px;height:34px;border-radius:999px;background:var(--color-accent-200);color:var(--color-accent-800);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">{{ k.initial }}</div>
+                  <div style="min-width:0">
+                    <div style="font-size:14px;font-weight:600">{{ k.name }}</div>
+                    <div style="font-size:11px;color:var(--color-neutral-700)">{{ k.note }}</div>
+                  </div>
+                  <div style="margin-left:auto;text-align:right">
+                    <div style="font-family:var(--font-heading);font-size:17px;color:{{ k.color }}">₹{{ k.bal }}</div>
+                    <button class="btn btn-ghost" style="font-size:11px;padding:2px 0" onClick="{{ k.settle }}">Mark paid</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+              <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:13px 14px">
+                <div style="font-size:11px;color:var(--color-neutral-700)">This week sale</div>
+                <div style="font-family:var(--font-heading);font-size:24px">₹{{ weekTotal }}</div>
+              </div>
+              <div style="background:var(--color-surface);border-radius:var(--radius-md);padding:13px 14px">
+                <div style="font-size:11px;color:var(--color-neutral-700)">Est. profit</div>
+                <div style="font-family:var(--font-heading);font-size:24px;color:var(--color-accent-2-700)">₹{{ weekProfit }}</div>
+              </div>
+            </div>
+            <div style="margin-top:16px;background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:14px">
+              <div style="font-family:var(--font-heading);font-size:15px;margin-bottom:12px">Last 7 days</div>
+              <div style="display:flex;align-items:flex-end;gap:9px;height:120px">
+                <sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                    <div style="font-size:9.5px;color:var(--color-neutral-700)">{{ d.amt }}</div>
+                    <div style="width:100%;border-radius:8px 8px 3px 3px;background:{{ d.fill }};height:{{ d.h }}"></div>
+                    <div style="font-size:10.5px;color:var(--color-neutral-700)">{{ d.day }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="margin-top:16px">
+              <div style="font-family:var(--font-heading);font-size:15px;margin-bottom:9px">Sold this week <span class="hi" style="font-family:'Noto Sans Devanagari';font-size:12px;color:var(--color-neutral-700)">हफ़्ते की बिक्री</span></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+                    <span style="width:8px;height:20px;border-radius:999px;background:{{ it.color }}"></span>
+                    <span style="font-weight:600">{{ it.en }}</span>
+                    <span style="color:var(--color-neutral-700);font-size:11.5px">{{ it.weekKg }}</span>
+                    <span style="margin-left:auto;font-family:var(--font-heading);font-size:15px">₹{{ it.weekAmt }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isRates }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:12.5px;color:var(--color-neutral-700);margin-bottom:12px">Selling rate per kg. Purchase rate comes from the dealer slip.<span class="hi" style="display:block">आज का बिक्री भाव</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px 13px;display:flex;align-items:center;gap:12px">
+                  <div style="width:10px;height:34px;border-radius:999px;background:{{ it.color }}"></div>
+                  <div>
+                    <div style="font-size:14.5px;font-weight:700">{{ it.en }}</div>
+                    <div style="font-size:11px;color:var(--color-neutral-700)">Bought at ₹{{ it.cost }}/kg · margin {{ it.margin }}</div>
+                  </div>
+                  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+                    <button class="btn btn-secondary" style="width:34px;height:34px;padding:0;border-radius:999px;font-size:18px" onClick="{{ it.dec }}">−</button>
+                    <div style="font-family:var(--font-heading);font-size:20px;min-width:46px;text-align:center">₹{{ it.rate }}</div>
+                    <button class="btn btn-primary" style="width:34px;height:34px;padding:0;border-radius:999px;font-size:18px" onClick="{{ it.inc }}">+</button>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:13px 14px">
+                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700)">Shop name</div>
+                <div style="font-family:var(--font-heading);font-size:19px;margin-top:3px">{{ shopName }}</div>
+                <div style="font-size:12px;color:var(--color-neutral-700)">Sabzi Mandi Road · GST not registered</div>
+              </div>
+              <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:13px 14px">
+                <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px">Bill language</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+                  <sc-for list="{{ langs }}" as="l" hint-placeholder-count="3">
+                    <button class="btn" style="{{ l.style }}" onClick="{{ l.pick }}">{{ l.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="4">
+                <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:12px 14px;display:flex;align-items:center;gap:12px">
+                  <div>
+                    <div style="font-size:14px;font-weight:600">{{ t.label }}</div>
+                    <div style="font-size:11.5px;color:var(--color-neutral-700)">{{ t.sub }}</div>
+                  </div>
+                  <button style="{{ t.trackStyle }}" onClick="{{ t.toggle }}">
+                    <span style="{{ t.knobStyle }}"></span>
+                  </button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+      </div>
+
+      <div style="display:flex;padding:8px 10px 26px;background:var(--color-surface);border-top:1px solid var(--color-divider)">
+        <button class="btn" style="{{ tabHome.style }}" onClick="{{ tabHome.go }}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.8V21h14V9.8"></path></svg>
+          <span style="font-family:var(--font-body);font-size:10px;font-weight:600">Home</span>
+        </button>
+        <button class="btn" style="{{ tabSale.style }}" onClick="{{ tabSale.go }}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>
+          <span style="font-family:var(--font-body);font-size:10px;font-weight:600">Sale</span>
+        </button>
+        <button class="btn" style="{{ tabInv.style }}" onClick="{{ tabInv.go }}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5z"></path><path d="M3 8l9 5 9-5"></path><path d="M12 13v8"></path></svg>
+          <span style="font-family:var(--font-body);font-size:10px;font-weight:600">Stock</span>
+        </button>
+        <button class="btn" style="{{ tabKhata.style }}" onClick="{{ tabKhata.go }}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M18 17H6"></path></svg>
+          <span style="font-family:var(--font-body);font-size:10px;font-weight:600">Khata</span>
+        </button>
+        <button class="btn" style="{{ tabMore.style }}" onClick="{{ tabMore.go }}">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V10M12 20V4M19 20v-7"></path></svg>
+          <span style="font-family:var(--font-body);font-size:10px;font-weight:600">Report</span>
+        </button>
+      </div>
+
+      <sc-if value="{{ weighing }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:80;background:rgba(32,30,29,.45);animation:fadeIn .18s ease" onClick="{{ closeWeigh }}"></div>
+      </sc-if>
+      <sc-if value="{{ weighing }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:81;background:var(--color-bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:16px 18px 34px;box-shadow:var(--shadow-lg);animation:sheetUp .22s cubic-bezier(.2,.8,.3,1)">
+          <div style="width:44px;height:4px;border-radius:999px;background:var(--color-neutral-400);margin:0 auto 12px"></div>
+          <div style="display:flex;align-items:flex-end;gap:10px">
+            <div>
+              <div style="font-family:var(--font-heading);font-size:22px">{{ weigh.en }}</div>
+              <div class="hi" style="font-size:12px;color:var(--color-neutral-700);white-space:nowrap">{{ weigh.hi }} · ₹{{ weigh.rate }}/kg</div>
+            </div>
+            <div style="margin-left:auto;text-align:right">
+              <div style="font-family:var(--font-heading);font-size:30px;line-height:1">{{ weigh.display }}</div>
+              <div style="font-size:12px;color:var(--color-accent-700)">₹{{ weigh.amount }}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;margin:13px 0 11px">
+            <sc-for list="{{ quick }}" as="q" hint-placeholder-count="4">
+              <button class="btn btn-secondary" style="flex:1;border-radius:999px;padding:8px 0;font-size:12.5px" onClick="{{ q.pick }}">{{ q.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            <sc-for list="{{ keys }}" as="k" hint-placeholder-count="12">
+              <button class="btn" style="{{ k.style }}" onClick="{{ k.press }}">{{ k.label }}</button>
+            </sc-for>
+          </div>
+          <button class="btn btn-primary btn-block" style="border-radius:999px;padding:14px;font-size:16px;margin-top:11px" onClick="{{ addLine }}">Add to bill</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ arriving }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:80;background:rgba(32,30,29,.45);animation:fadeIn .18s ease" onClick="{{ closeIn }}"></div>
+      </sc-if>
+      <sc-if value="{{ arriving }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:81;background:var(--color-bg);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:16px 18px 32px;box-shadow:var(--shadow-lg);max-height:88%;overflow-y:auto;animation:sheetUp .22s cubic-bezier(.2,.8,.3,1)">
+          <div style="width:44px;height:4px;border-radius:999px;background:var(--color-neutral-400);margin:0 auto 12px"></div>
+          <div style="font-family:var(--font-heading);font-size:20px">New arrival</div>
+          <div class="hi" style="font-size:12px;color:var(--color-neutral-700);margin-bottom:12px">आज का माल किस व्यापारी से आया</div>
+          <div style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:7px">Dealer</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+            <sc-for list="{{ dealers }}" as="d" hint-placeholder-count="3">
+              <button class="btn" style="{{ d.style }}" onClick="{{ d.pick }}">{{ d.name }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <sc-for list="{{ inRows }}" as="r" hint-placeholder-count="4">
+              <div style="background:var(--color-neutral-100);border:1px solid var(--color-divider);border-radius:var(--radius-md);padding:11px 12px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="width:8px;height:20px;border-radius:999px;background:{{ r.color }}"></span>
+                  <span style="font-size:14px;font-weight:700">{{ r.en }}</span>
+                  <span class="hi" style="font-size:11px;color:var(--color-neutral-700)">{{ r.hi }}</span>
+                  <span style="margin-left:auto;font-size:12px;color:var(--color-neutral-700)">{{ r.total }}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:9px;margin-top:9px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button class="btn btn-secondary" style="width:30px;height:30px;padding:0;border-radius:999px" onClick="{{ r.dec }}">−</button>
+                    <div style="min-width:64px;text-align:center">
+                      <div style="font-family:var(--font-heading);font-size:16px;line-height:1">{{ r.packets }}</div>
+                      <div style="font-size:9.5px;color:var(--color-neutral-700)">packets</div>
+                    </div>
+                    <button class="btn btn-secondary" style="width:30px;height:30px;padding:0;border-radius:999px" onClick="{{ r.inc }}">+</button>
+                  </div>
+                  <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+                    <span style="font-size:11px;color:var(--color-neutral-700)">each</span>
+                    <button class="btn btn-secondary" style="width:30px;height:30px;padding:0;border-radius:999px" onClick="{{ r.lighter }}">−</button>
+                    <div style="font-family:var(--font-heading);font-size:15px;min-width:62px;text-align:center">{{ r.each }}</div>
+                    <button class="btn btn-secondary" style="width:30px;height:30px;padding:0;border-radius:999px" onClick="{{ r.heavier }}">+</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <button class="btn btn-primary btn-block" style="border-radius:999px;padding:14px;font-size:16px;margin-top:13px" onClick="{{ saveIn }}">Save under {{ dealerName }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:18px;right:18px;bottom:96px;z-index:90;background:var(--color-accent-900);color:var(--color-accent-100);border-radius:999px;padding:11px 18px;font-size:13px;text-align:center;box-shadow:var(--shadow-lg);animation:fadeIn .2s ease">{{ toast }}</div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:820,&quot;height&quot;:980},&quot;shopName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Verma Sabzi Bhandar&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;showHindi&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;lowStockKg&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:25,&quot;min&quot;:5,&quot;max&quot;:100,&quot;unit&quot;:&quot;kg&quot;,&quot;tsType&quot;:&quot;number&quot;}}">
+const ITEMS = [
+  { id: 'onion', en: 'Onion', hi: 'प्याज़', color: '#b2622d', rate: 32, cost: 24, stock: 486000, cap: 700000, sold: 62000, weekKg: 412, packet: 24000 },
+  { id: 'potato', en: 'Potato', hi: 'आलू', color: '#8fa073', rate: 24, cost: 17, stock: 372000, cap: 700000, sold: 84000, weekKg: 528, packet: 50000 },
+  { id: 'garlic', en: 'Garlic', hi: 'लहसुन', color: '#a19786', rate: 110, cost: 84, stock: 41000, cap: 200000, sold: 6500, weekKg: 48, packet: 10000 },
+  { id: 'ginger', en: 'Ginger', hi: 'अदरक', color: '#56633f', rate: 90, cost: 68, stock: 17500, cap: 200000, sold: 3200, weekKg: 31, packet: 5000 }
+];
+const DEALERS = ['Jaiswal Traders', 'Mahalaxmi Aadat', 'Ramkishan & Sons'];
+
+class Component extends DCLogic {
+  state = {
+    screen: 'home', cart: [], pay: 'cash', who: null,
+    rates: { onion: 32, potato: 24, garlic: 110, ginger: 90 },
+    stock: { onion: 486000, potato: 372000, garlic: 41000, ginger: 17500 },
+    sold: { onion: 62000, potato: 84000, garlic: 6500, ginger: 3200 },
+    weigh: null, digits: '', bill: null, toast: '', lang: 'Both',
+    arriving: false, dealer: 'Jaiswal Traders',
+    inRows: { onion: { p: 20, each: 24000 }, potato: { p: 10, each: 50000 }, garlic: { p: 3, each: 10000 }, ginger: { p: 0, each: 5000 } },
+    lots: [
+      { id: 1, day: 'Today · 11 Sep', dealer: 'Jaiswal Traders', slip: 'Slip #JT-2210 · morning', cost: 24800, rows: [['onion', 20, 24000], ['potato', 10, 50000], ['garlic', 3, 10000]] },
+      { id: 2, day: 'Today · 11 Sep', dealer: 'Mahalaxmi Aadat', slip: 'Slip #ML-118 · afternoon', cost: 9450, rows: [['ginger', 4, 5000], ['garlic', 2, 10000]] },
+      { id: 3, day: 'Yesterday · 10 Sep', dealer: 'Ramkishan & Sons', slip: 'Slip #RK-77', cost: 18600, rows: [['potato', 12, 50000], ['onion', 8, 24000]] }
+    ],
+    khata: [
+      { name: 'Sharma Bhojnalaya', note: '3 bills · last 9 Sep', bal: 4820 },
+      { name: 'Guddu Chaat Corner', note: '1 bill · last 11 Sep', bal: 960 },
+      { name: 'Hotel Ashoka', note: '5 bills · last 8 Sep', bal: 12400 },
+      { name: 'Rekha Devi', note: '2 bills · last 7 Sep', bal: 340 }
+    ],
+    bills: [
+      { total: 640, pay: 'cash' }, { total: 1180, pay: 'upi' }, { total: 960, pay: 'credit' },
+      { total: 275, pay: 'cash' }, { total: 1420, pay: 'cash' }, { total: 520, pay: 'upi' }, { total: 385, pay: 'cash' }
+    ],
+    toggles: { print: true, whatsapp: true, backup: false, lowAlert: true },
+    no: 48
+  };
+
+  wt(g) {
+    if (g >= 1000) { const k = (g / 1000).toFixed(3).replace(/\.?0+$/, ''); return k + ' kg'; }
+    return g + ' g';
+  }
+  say(t) { this.setState({ toast: t }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 1900); }
+  go(s) { return () => this.setState({ screen: s }); }
+
+  chip(on, base) {
+    return Object.assign({
+      borderRadius: 999, padding: '8px 14px', fontSize: 12.5, whiteSpace: 'nowrap', border: '1px solid var(--color-divider)',
+      background: on ? 'var(--color-accent)' : 'var(--color-neutral-100)', color: on ? '#fff' : 'var(--color-text)'
+    }, base || {});
+  }
+
+  addLine = () => {
+    const g = parseInt(this.state.digits || '0', 10);
+    if (!g) { this.say('Enter a weight first'); return; }
+    const it = this.state.weigh, rate = this.state.rates[it.id];
+    const line = { id: it.id, en: it.en, color: it.color, g, rate, amt: Math.round(rate * g / 1000) };
+    this.setState(s => ({ cart: s.cart.concat([line]), weigh: null, digits: '' }));
+  };
+
+  finish = () => {
+    const s = this.state, total = s.cart.reduce((a, l) => a + l.amt, 0);
+    if (s.pay === 'credit' && !s.who) { this.say('Pick a khata name'); return; }
+    const stock = Object.assign({}, s.stock), sold = Object.assign({}, s.sold);
+    s.cart.forEach(l => { stock[l.id] = Math.max(0, stock[l.id] - l.g); sold[l.id] += l.g; });
+    const khata = s.khata.map(k => (s.pay === 'credit' && k.name === s.who) ? Object.assign({}, k, { bal: k.bal + total, note: 'updated just now' }) : k);
+    const d = new Date();
+    this.setState({
+      bill: { no: '#' + (s.no + 1), time: d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'), lines: s.cart.map(l => ({ en: l.en, wt: this.wt(l.g), rate: l.rate, amt: l.amt })), total, pay: s.pay, who: s.who },
+      no: s.no + 1, cart: [], stock, sold, khata, bills: s.bills.concat([{ total, pay: s.pay }]),
+      screen: 'bill', pay: 'cash', who: null
+    });
+  };
+
+  saveIn = () => {
+    const s = this.state, rows = [], stock = Object.assign({}, s.stock);
+    let cost = 0;
+    ITEMS.forEach(it => {
+      const r = s.inRows[it.id];
+      if (r.p > 0) { rows.push([it.id, r.p, r.each]); stock[it.id] += r.p * r.each; cost += Math.round(it.cost * r.p * r.each / 1000); }
+    });
+    if (!rows.length) { this.say('Add at least one packet'); return; }
+    const lot = { id: Date.now(), day: 'Today · 11 Sep', dealer: s.dealer, slip: 'Slip entered just now', cost, rows };
+    this.setState({ lots: [lot].concat(s.lots), stock, arriving: false, screen: 'stock' });
+    this.say('Filed under ' + s.dealer);
+  };
+
+  renderVals() {
+    const s = this.state, showHi = this.props.showHindi !== false && s.lang !== 'English';
+    const shopName = this.props.shopName || 'Verma Sabzi Bhandar';
+    const low = this.props.lowStockKg ?? 25;
+    const heads = {
+      home: ['Namaste, Verma ji', 'आज का हिसाब'], sale: ['New sale', 'सामान तौलें'], bill: ['Bill ready', 'बिल तैयार'],
+      inv: ['Inventory', 'स्टॉक'], stock: ['Arrivals by dealer', 'व्यापारी के नाम माल'], khata: ['Khata', 'उधार बही'],
+      report: ['Reports', 'रिपोर्ट'], rates: ['Rates', 'भाव'], settings: ['Settings', 'सेटिंग']
+    };
+    const h = heads[s.screen] || heads.home;
+    const cartTotal = s.cart.reduce((a, l) => a + l.amt, 0);
+    const cartG = s.cart.reduce((a, l) => a + l.g, 0);
+    const todayBills = s.bills, tt = todayBills.reduce((a, b) => a + b.total, 0);
+    const sumBy = m => todayBills.filter(b => b.pay === m).reduce((a, b) => a + b.total, 0);
+    const lowItem = ITEMS.map(i => ({ i, g: s.stock[i.id] })).sort((a, b) => a.g - b.g)[0];
+
+    const items = ITEMS.map(it => {
+      const g = s.stock[it.id], rate = s.rates[it.id];
+      return {
+        id: it.id, en: it.en, hi: showHi ? it.hi : '', color: it.color, rate, cost: it.cost,
+        margin: Math.round((rate - it.cost) / it.cost * 100) + '%',
+        stockKg: this.wt(g), packets: Math.max(1, Math.round(g / it.packet)), barW: Math.min(100, Math.round(g / it.cap * 100)) + '%',
+        soldToday: this.wt(s.sold[it.id]), lastIn: 'In today · Jaiswal',
+        stockLabel: this.wt(g) + ' left', weekKg: it.weekKg + ' kg', weekAmt: (it.weekKg * rate).toLocaleString('en-IN'),
+        tileStyle: {
+          background: 'var(--color-surface)', border: '1px solid var(--color-divider)', borderLeft: '7px solid ' + it.color,
+          borderRadius: 'var(--radius-md)', padding: '14px 14px 13px', minHeight: 104, alignItems: 'flex-start', justifyContent: 'flex-start', textAlign: 'left'
+        },
+        pick: () => this.setState({ weigh: it, digits: '' }),
+        inc: () => this.setState(p => ({ rates: Object.assign({}, p.rates, { [it.id]: p.rates[it.id] + 1 }) })),
+        dec: () => this.setState(p => ({ rates: Object.assign({}, p.rates, { [it.id]: Math.max(1, p.rates[it.id] - 1) }) }))
+      };
+    });
+
+    const g = parseInt(s.digits || '0', 10);
+    const jumpDefs = [['home', 'Home'], ['sale', 'New sale'], ['bill', 'Bill'], ['inv', 'Inventory'], ['stock', 'Stock in'], ['khata', 'Khata'], ['report', 'Reports'], ['rates', 'Rates'], ['settings', 'Settings']];
+    const tab = (key, on) => ({ style: { flex: 1, flexDirection: 'column', gap: 3, padding: '7px 0', borderRadius: 'var(--radius-md)', color: on ? 'var(--color-accent-700)' : 'var(--color-neutral-600)', background: on ? 'var(--color-accent-200)' : 'transparent' }, go: this.go(key) });
+    const weekDays = ['Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu'];
+    const weekVals = [4200, 6850, 8100, 5300, 4900, 6100, tt];
+    const wmax = Math.max.apply(null, weekVals);
+
+    return {
+      shopName, today: '11 Sep 2026', head: h[0], headHi: showHi ? h[1] : '',
+      isHome: s.screen === 'home', isSale: s.screen === 'sale', isBill: s.screen === 'bill', isInv: s.screen === 'inv',
+      isStock: s.screen === 'stock', isKhata: s.screen === 'khata', isReport: s.screen === 'report',
+      isRates: s.screen === 'rates', isSettings: s.screen === 'settings',
+      goSale: this.go('sale'), goStock: this.go('stock'), goRates: this.go('rates'),
+      tabHome: tab('home', s.screen === 'home'), tabSale: tab('sale', s.screen === 'sale' || s.screen === 'bill'),
+      tabInv: tab('inv', s.screen === 'inv' || s.screen === 'stock'), tabKhata: tab('khata', s.screen === 'khata'),
+      tabMore: tab('report', s.screen === 'report' || s.screen === 'rates' || s.screen === 'settings'),
+      jumps: jumpDefs.map(([k, l]) => ({ label: l, go: this.go(k), style: this.chip(s.screen === k, { fontSize: 12, padding: '6px 12px' }) })),
+      items, toast: s.toast,
+
+      todayTotal: tt.toLocaleString('en-IN'), todayCash: sumBy('cash').toLocaleString('en-IN'),
+      todayUpi: sumBy('upi').toLocaleString('en-IN'), todayCredit: sumBy('credit').toLocaleString('en-IN'),
+      todayBills: todayBills.length,
+      lowName: lowItem.i.en, lowLeft: this.wt(lowItem.g),
+      recent: [
+        { name: 'Sharma Bhojnalaya', initial: 'SB', summary: 'Onion 10 kg · Potato 25 kg · Ginger 2 kg', repeat: () => { this.setState({ screen: 'sale', cart: [{ id: 'onion', en: 'Onion', color: '#b2622d', g: 10000, rate: s.rates.onion, amt: s.rates.onion * 10 }, { id: 'potato', en: 'Potato', color: '#8fa073', g: 25000, rate: s.rates.potato, amt: s.rates.potato * 25 }, { id: 'ginger', en: 'Ginger', color: '#56633f', g: 2000, rate: s.rates.ginger, amt: s.rates.ginger * 2 }] }); this.say('Last order loaded'); } },
+        { name: 'Guddu Chaat Corner', initial: 'GC', summary: 'Onion 20 kg · Garlic 1.5 kg', repeat: () => { this.setState({ screen: 'sale', cart: [{ id: 'onion', en: 'Onion', color: '#b2622d', g: 20000, rate: s.rates.onion, amt: s.rates.onion * 20 }, { id: 'garlic', en: 'Garlic', color: '#a19786', g: 1500, rate: s.rates.garlic, amt: Math.round(s.rates.garlic * 1.5) }] }); this.say('Last order loaded'); } },
+        { name: 'Hotel Ashoka', initial: 'HA', summary: 'Potato 50 kg · Onion 30 kg', repeat: () => { this.setState({ screen: 'sale', cart: [{ id: 'potato', en: 'Potato', color: '#8fa073', g: 50000, rate: s.rates.potato, amt: s.rates.potato * 50 }, { id: 'onion', en: 'Onion', color: '#b2622d', g: 30000, rate: s.rates.onion, amt: s.rates.onion * 30 }] }); this.say('Last order loaded'); } }
+      ],
+
+      cart: s.cart.map((l, i) => ({ en: l.en, color: l.color, wt: this.wt(l.g), rate: l.rate, amt: l.amt, remove: () => this.setState(p => ({ cart: p.cart.filter((_, j) => j !== i) })) })),
+      hasCart: s.cart.length > 0, cartEmpty: s.cart.length === 0,
+      cartTotal: cartTotal.toLocaleString('en-IN'), cartWeight: this.wt(cartG),
+      payModes: [['cash', 'Cash'], ['upi', 'UPI'], ['credit', 'Udhaar']].map(([k, label]) => ({
+        label, pick: () => this.setState({ pay: k, who: k === 'credit' ? s.who : null }),
+        style: { borderRadius: 999, padding: '11px 0', fontSize: 13.5, border: '1px solid var(--color-divider)', background: s.pay === k ? 'var(--color-accent-2-600)' : 'var(--color-neutral-100)', color: s.pay === k ? '#fff' : 'var(--color-text)' }
+      })),
+      isCredit: s.pay === 'credit',
+      khataChips: s.khata.map(k => ({ name: k.name, pick: () => this.setState({ who: k.name }), style: this.chip(s.who === k.name) })),
+      finish: this.finish,
+
+      weighing: !!s.weigh,
+      weigh: s.weigh ? { en: s.weigh.en, hi: s.weigh.hi, rate: s.rates[s.weigh.id], display: g ? this.wt(g) : '0 g', amount: Math.round(s.rates[s.weigh.id] * g / 1000) } : {},
+      closeWeigh: () => this.setState({ weigh: null, digits: '' }),
+      quick: [500, 1000, 2000, 5000].map(v => ({ label: this.wt(v), pick: () => this.setState({ digits: String(v) }) })),
+      keys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', '⌫'].map(k => ({
+        label: k,
+        style: { padding: '13px 0', fontSize: 20, borderRadius: 'var(--radius-md)', background: k === '⌫' ? 'transparent' : 'var(--color-surface)', color: 'var(--color-text)' },
+        press: () => this.setState(p => ({ digits: k === '⌫' ? p.digits.slice(0, -1) : (p.digits + k).slice(0, 6) }))
+      })),
+      addLine: this.addLine,
+
+      bill: s.bill ? Object.assign({}, s.bill, { total: s.bill.total.toLocaleString('en-IN'), payLabel: { cash: 'Paid in cash', upi: 'Paid by UPI', credit: 'On khata' }[s.bill.pay], who: s.bill.who || 'Walk-in' }) : { lines: [] },
+      share: () => this.say('Bill sent on WhatsApp'),
+
+      days: ['Today · 11 Sep', 'Yesterday · 10 Sep'].map(day => {
+        const lots = s.lots.filter(l => l.day === day);
+        return {
+          label: day, total: '₹' + lots.reduce((a, l) => a + l.cost, 0).toLocaleString('en-IN') + ' bought',
+          lots: lots.map(l => ({
+            dealer: l.dealer, slip: l.slip, cost: l.cost.toLocaleString('en-IN'),
+            initial: l.dealer.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            rows: l.rows.map(([id, p, each]) => { const it = ITEMS.find(i => i.id === id); return { en: it.en, color: it.color, packets: p, each: this.wt(each), total: this.wt(p * each) }; })
+          }))
+        };
+      }),
+      openIn: () => this.setState({ arriving: true }), closeIn: () => this.setState({ arriving: false }),
+      arriving: s.arriving, dealerName: s.dealer,
+      dealers: DEALERS.map(d => ({ name: d, pick: () => this.setState({ dealer: d }), style: this.chip(s.dealer === d) })),
+      inRows: ITEMS.map(it => {
+        const r = s.inRows[it.id];
+        const set = (p, each) => this.setState(st => ({ inRows: Object.assign({}, st.inRows, { [it.id]: { p, each } }) }));
+        return {
+          en: it.en, hi: showHi ? it.hi : '', color: it.color, packets: r.p, each: this.wt(r.each), total: r.p ? this.wt(r.p * r.each) : '—',
+          inc: () => set(r.p + 1, r.each), dec: () => set(Math.max(0, r.p - 1), r.each),
+          heavier: () => set(r.p, r.each + 1000), lighter: () => set(r.p, Math.max(500, r.each - 1000))
+        };
+      }),
+      saveIn: this.saveIn,
+
+      khata: s.khata.map(k => ({
+        name: k.name, note: k.note, initial: k.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+        bal: k.bal.toLocaleString('en-IN'), color: k.bal > 5000 ? 'var(--color-accent-700)' : 'var(--color-text)',
+        settle: () => { this.setState(p => ({ khata: p.khata.map(x => x.name === k.name ? Object.assign({}, x, { bal: 0, note: 'settled just now' }) : x) })); this.say(k.name + ' settled'); }
+      })),
+      khataTotal: s.khata.reduce((a, k) => a + k.bal, 0).toLocaleString('en-IN'),
+      khataCount: s.khata.filter(k => k.bal > 0).length,
+
+      weekTotal: weekVals.reduce((a, b) => a + b, 0).toLocaleString('en-IN'),
+      weekProfit: Math.round(weekVals.reduce((a, b) => a + b, 0) * 0.26).toLocaleString('en-IN'),
+      week: weekDays.map((d, i) => ({ day: d, amt: (weekVals[i] / 1000).toFixed(1) + 'k', h: Math.round(weekVals[i] / wmax * 88) + '%', fill: i === 6 ? 'var(--color-accent)' : 'var(--color-accent-2-400)' })),
+
+      langs: ['English', 'हिंदी', 'Both'].map(l => ({ label: l, pick: () => this.setState({ lang: l }), style: this.chip(s.lang === l, { padding: '9px 0', fontSize: 13 }) })),
+      toggles: [
+        ['print', 'Bluetooth printer', 'Zebra ZQ220 · connected'],
+        ['whatsapp', 'Send bill on WhatsApp', 'Attach a photo of the bill'],
+        ['lowAlert', 'Low stock alert', 'Warn below ' + low + ' kg'],
+        ['backup', 'Daily backup', 'Upload the ledger at 10 pm']
+      ].map(([k, label, sub]) => {
+        const on = s.toggles[k];
+        return {
+          label, sub,
+          trackStyle: { marginLeft: 'auto', flex: 'none', width: 50, height: 30, borderRadius: 999, border: 0, cursor: 'pointer', padding: 3, display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start', background: on ? 'var(--color-accent-2-600)' : 'var(--color-neutral-400)', transition: 'background .18s' },
+          knobStyle: { width: 24, height: 24, borderRadius: 999, background: '#fff', display: 'block', boxShadow: 'var(--shadow-sm)' },
+          toggle: () => this.setState(p => ({ toggles: Object.assign({}, p.toggles, { [k]: !p.toggles[k] }) }))
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

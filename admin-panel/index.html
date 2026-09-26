@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mandi Ledger — Admin Panel</title>
+  <meta name="description" content="Super-admin panel to manage stores and users for Mandi Ledger." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f5ead8;             /* App main canvas background */
+      --bg2: #ede1ce;            /* Sidebar / topbar warm tone */
+      --card: #fff9f0;           /* Clean warm card surface */
+      --card-h: #ffffff;         /* Card hover */
+      --card-border: #dcd3c4;    /* Neutral border */
+      --glass: rgba(255, 249, 240, 0.85);
+      --bdr: rgba(32, 30, 29, 0.12);
+      --bdr2: rgba(32, 30, 29, 0.22);
+      --accent: #c67139;         /* Terracotta primary accent */
+      --accent-l: #d67f48;       /* Terracotta light */
+      --accent-d: #b2622d;       /* Terracotta deep */
+      --accent-glow: rgba(198, 113, 57, 0.28);
+      --sage: #728157;           /* Sage green / mandi nature */
+      --sage-l: #8fa073;
+      --ok: #56633f;             /* Forest / sage green */
+      --ok-bg: #f0fae1;
+      --warn: #b2622d;
+      --err: #9c2a1c;            /* Organic brick red */
+      --err-bg: #fde8e4;
+      --t1: #201e1d;             /* Deep warm black text */
+      --t2: #645c50;             /* Neutral 700 muted text */
+      --t3: #82796a;             /* Neutral 600 subtle text */
+      --r: 16px;
+      --rs: 9px;
+      --font-heading: 'Caprasimo', Georgia, serif;
+      --font-body: 'Figtree', system-ui, -apple-system, sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:var(--font-body);background:var(--bg);color:var(--t1);overflow:hidden}
+    ::-webkit-scrollbar{width:6px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:#c0b6a5;border-radius:99px}
+    ::-webkit-scrollbar-thumb:hover{background:#a19786}
+
+    h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 400; color: var(--t1); }
+
+    /* ─ LOGIN ─ */
+    #login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+      background:radial-gradient(ellipse 65% 65% at 20% 30%,rgba(198,113,57,.15) 0%,transparent 65%),
+                 radial-gradient(ellipse 60% 60% at 85% 75%,rgba(114,129,87,.18) 0%,transparent 65%),
+                 var(--bg)}
+    .lcard{width:100%;max-width:430px;padding:42px 38px;
+      background:#fff9f0;border:1px solid var(--card-border);border-radius:24px;
+      box-shadow:0 16px 40px rgba(46,42,37,.12),0 2px 6px rgba(46,42,37,.05);
+      animation:fadeUp .45s ease}
+    .llogo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+    .llogo-icon{width:48px;height:48px;border-radius:14px;
+      background:linear-gradient(135deg,var(--accent),var(--sage));
+      display:flex;align-items:center;justify-content:center;color:#fff8eb;
+      box-shadow:0 6px 18px var(--accent-glow)}
+    .llogo-icon svg{width:26px;height:26px}
+    .llogo h1{font-size:20px;font-family:var(--font-heading);line-height:1.1}
+    .llogo p{font-size:11px;color:var(--t2);margin-top:2px;font-family:var(--font-body);font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+    .lcard>h2{font-size:26px;margin-bottom:5px}
+    .lcard>.sub{color:var(--t2);font-size:14px;margin-bottom:26px}
+    #lerr{display:none;background:var(--err-bg);border:1px solid rgba(156,42,28,.28);
+      color:var(--err);padding:10px 14px;border-radius:var(--rs);font-size:13px;margin-bottom:14px}
+
+    /* ─ FORM ELEMENTS ─ */
+    .fg{margin-bottom:16px}
+    .fg label{display:block;font-size:11px;font-weight:700;color:var(--t2);
+      margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase}
+    .fg input,.fg select,.fg textarea{width:100%;padding:11px 13px;border-radius:var(--rs);
+      background:#ffffff;border:1px solid var(--card-border);
+      color:var(--t1);font-family:inherit;font-size:14px;transition:border-color .2s,box-shadow .2s;outline:none}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(198,113,57,.18)}
+    .fg select option{background:#ffffff;color:var(--t1)}
+    .fg textarea{resize:vertical;min-height:68px}
+
+    /* ─ BUTTONS ─ */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+      padding:10px 18px;border-radius:var(--rs);font-family:inherit;font-size:14px;
+      font-weight:600;cursor:pointer;border:none;transition:all .18s;white-space:nowrap}
+    .btn-p{background:var(--accent);color:#fff8eb;
+      box-shadow:0 3px 10px rgba(198,113,57,.32)}
+    .btn-p:hover{background:var(--accent-d);transform:translateY(-1px);box-shadow:0 5px 16px rgba(198,113,57,.45)}
+    .btn-p:active{transform:translateY(0)}
+    .btn-s{background:#ede0cd;color:var(--t1);border:1px solid var(--bdr)}
+    .btn-s:hover{background:#e2d2bd}
+    .btn-d{background:var(--err-bg);color:var(--err);border:1px solid rgba(156,42,28,.22)}
+    .btn-d:hover{background:#fad5cf}
+    .btn-ok{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(86,99,63,.25)}
+    .btn-ok:hover{background:#e4f3cd}
+    .btn-sm{padding:6px 13px;font-size:12px;border-radius:7px}
+    .btn-full{width:100%}
+    .btn-ico{width:32px;height:32px;padding:0;border-radius:7px}
+    .spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+      border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+    /* ─ APP SHELL ─ */
+    #app{display:none;height:100vh;flex-direction:column}
+    #app.show{display:flex}
+
+    /* ─ TOPBAR ─ */
+    .topbar{display:flex;align-items:center;justify-content:space-between;
+      padding:0 24px;height:60px;flex-shrink:0;
+      background:#ede1ce;border-bottom:1px solid var(--bdr)}
+    .tb-brand{display:flex;align-items:center;gap:10px}
+    .tb-icon{width:34px;height:34px;border-radius:9px;
+      background:linear-gradient(135deg,var(--accent),var(--sage));
+      display:flex;align-items:center;justify-content:center;color:#fff8eb}
+    .tb-icon svg{width:18px;height:18px}
+    .tb-brand h1{font-size:17px;line-height:1}
+    .tb-brand span{font-family:var(--font-body);font-size:10px;color:var(--accent);font-weight:700;
+      letter-spacing:.08em;text-transform:uppercase;margin-left:5px;
+      background:rgba(198,113,57,.12);padding:2px 7px;border-radius:99px}
+    .tb-right{display:flex;align-items:center;gap:10px}
+    .achip{display:flex;align-items:center;gap:8px;background:#fff9f0;
+      border:1px solid var(--card-border);border-radius:99px;padding:4px 12px 4px 5px;font-size:13px;font-weight:600}
+    .achip-av{width:26px;height:26px;border-radius:50%;
+      background:linear-gradient(135deg,var(--accent),var(--sage));
+      display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff8eb}
+
+    /* ─ LANG TOGGLE ─ */
+    .lang-toggle{display:inline-flex;align-items:center;background:#e5d6c2;border:1px solid var(--bdr2);border-radius:99px;padding:3px;gap:2px}
+    .lang-btn{border:none;background:transparent;padding:4px 11px;border-radius:99px;font-size:12px;font-weight:700;color:var(--t2);cursor:pointer;transition:all .18s;font-family:inherit}
+    .lang-btn:hover{color:var(--t1)}
+    .lang-btn.on{background:var(--accent);color:#fff8eb;box-shadow:0 2px 6px rgba(198,113,57,.35)}
+
+    /* ─ LAYOUT ─ */
+    .layout{display:flex;flex:1;overflow:hidden}
+
+    /* ─ SIDEBAR ─ */
+    .sidebar{width:250px;flex-shrink:0;background:#ede1ce;
+      border-right:1px solid var(--bdr);display:flex;flex-direction:column;
+      padding:16px 10px;overflow-y:auto}
+    .nav-lbl{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+      color:var(--t3);padding:0 10px;margin:14px 0 5px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;
+      border-radius:var(--rs);margin-bottom:3px;color:var(--t2);font-size:14px;
+      font-weight:500;cursor:pointer;transition:all .16s;user-select:none}
+    .nav-item:hover{background:#e2d3be;color:var(--t1)}
+    .nav-item.on{background:#fff9f0;color:var(--accent);font-weight:700;
+      border:1px solid var(--card-border);box-shadow:0 2px 6px rgba(46,42,37,.05)}
+    .nav-ico{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit}
+    .nav-ico svg{width:18px;height:18px}
+    .nav-dot{width:6px;height:6px;border-radius:50%;background:transparent;margin-left:auto;transition:background .16s}
+    .nav-item.on .nav-dot{background:var(--accent)}
+    .sb-footer{margin-top:auto;padding-top:16px;border-top:1px solid var(--bdr)}
+
+    /* ─ CONTENT ─ */
+    .content{flex:1;overflow-y:auto;padding:26px 30px;background:var(--bg)}
+    .page{display:none}
+    .page.on{display:block;animation:fadeIn .28s ease}
+
+    /* ─ PAGE HEADER ─ */
+    .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+    .ph h2{font-size:24px}
+    .ph p{font-size:13px;color:var(--t2);margin-top:3px}
+
+    /* ─ STAT CARDS ─ */
+    .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px}
+    .sc{background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);
+      padding:20px;position:relative;overflow:hidden;transition:all .22s;
+      box-shadow:0 2px 8px rgba(46,42,37,.05)}
+    .sc:hover{background:var(--card-h);border-color:rgba(198,113,57,.35);transform:translateY(-2px);
+      box-shadow:0 8px 18px rgba(46,42,37,.09)}
+    .sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,var(--accent),var(--sage))}
+    .sc-lbl{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;
+      letter-spacing:.06em;margin-bottom:7px}
+    .sc-val{font-size:32px}
+    .sc-ico{position:absolute;right:16px;top:16px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--t1);opacity:.25}
+    .sc-ico svg{width:30px;height:30px}
+
+    /* ─ TOOLBAR ─ */
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    .sbox{display:flex;align-items:center;gap:8px;background:var(--card);
+      border:1px solid var(--card-border);border-radius:var(--rs);padding:9px 13px;flex:1;min-width:180px;
+      transition:border-color .2s}
+    .sbox:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(198,113,57,.15)}
+    .sbox-ico{display:flex;align-items:center;color:var(--t3);flex-shrink:0}
+    .sbox input{background:none;border:none;outline:none;color:var(--t1);
+      font-family:inherit;font-size:14px;flex:1}
+    .sbox input::placeholder{color:var(--t3)}
+    .fsel{background:var(--card);border:1px solid var(--card-border);border-radius:var(--rs);
+      padding:9px 13px;color:var(--t1);font-family:inherit;font-size:14px;cursor:pointer;outline:none}
+    .fsel:focus{border-color:var(--accent)}
+
+    /* ─ STORE CARDS ─ */
+    .sg2{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:15px}
+    .stcard{background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);
+      padding:20px;transition:all .22s;position:relative;overflow:hidden;
+      box-shadow:0 2px 8px rgba(46,42,37,.05)}
+    .stcard::after{content:'';position:absolute;inset:0;
+      background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(198,113,57,.08),transparent 55%);
+      opacity:0;transition:opacity .3s;pointer-events:none}
+    .stcard:hover{background:var(--card-h);border-color:rgba(198,113,57,.35);transform:translateY(-3px);
+      box-shadow:0 12px 24px rgba(46,42,37,.1)}
+    .stcard:hover::after{opacity:1}
+    .sth{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px}
+    .stav{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;
+      justify-content:center;font-size:18px;font-weight:800;flex-shrink:0}
+    .bdg{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+      font-weight:600;padding:3px 9px;border-radius:99px}
+    .bdg-dot{width:6px;height:6px;border-radius:50%;background:currentColor;display:inline-block}
+    .bdg-ok{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(86,99,63,.28)}
+    .bdg-no{background:var(--err-bg);color:var(--err);border:1px solid rgba(156,42,28,.25)}
+    .stn{font-size:17px;margin-bottom:2px}
+    .st-meta-row{font-size:12px;color:var(--t2);margin-top:4px;display:flex;align-items:center;gap:5px}
+    .stm{font-size:12px;color:var(--t2);display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 12px}
+    .stm>span{display:inline-flex;align-items:center;gap:4px}
+    .meta-ico{color:var(--t3);flex-shrink:0}
+    .stst{display:flex;gap:10px;margin-bottom:14px}
+    .stst-i{flex:1;background:#f3e7d4;border-radius:8px;padding:8px 10px;text-align:center;border:1px solid rgba(32,30,29,.06)}
+    .stst-v{font-size:18px}
+    .stst-l{font-size:10px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+    .sta{display:flex;gap:7px}
+
+    /* ─ TABLE ─ */
+    .tw{background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);overflow:hidden;
+      box-shadow:0 2px 8px rgba(46,42,37,.05)}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:#eee1ce;padding:12px 15px;text-align:left;
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;
+      color:var(--t2);border-bottom:1px solid var(--card-border)}
+    tbody tr{border-bottom:1px solid rgba(32,30,29,.07);transition:background .14s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#faf2e5}
+    tbody td{padding:12px 15px;font-size:14px;vertical-align:middle}
+    .uc{display:flex;align-items:center;gap:10px}
+    .uav{width:33px;height:33px;border-radius:50%;display:flex;align-items:center;
+      justify-content:center;font-size:12px;font-weight:700;
+      background:linear-gradient(135deg,var(--accent),var(--sage));color:#fff8eb;flex-shrink:0}
+    .un{font-weight:600}
+    .ue{font-size:12px;color:var(--t2)}
+    .rbdg{display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;
+      font-size:11px;font-weight:600}
+    .r-owner{background:rgba(198,113,57,.14);color:#8c491a;border:1px solid rgba(198,113,57,.3)}
+    .r-staff{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(86,99,63,.28)}
+    .empty{text-align:center;padding:56px 20px;color:var(--t2)}
+    .empty-ico{width:56px;height:56px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;color:var(--t2);opacity:.4}
+    .empty-ico svg{width:44px;height:44px}
+
+    /* ─ STORE SELECTOR ─ */
+    .ssel{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding:13px 16px;
+      background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);
+      box-shadow:0 2px 8px rgba(46,42,37,.05)}
+    .ssel label{font-size:13px;font-weight:600;color:var(--t2);white-space:nowrap}
+    .ssel select{flex:1;background:#ffffff;border:1px solid var(--card-border);
+      border-radius:var(--rs);padding:8px 11px;color:var(--t1);font-family:inherit;font-size:14px;outline:none}
+    .ssel select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(198,113,57,.15)}
+
+    /* ─ MODAL ─ */
+    .mo{position:fixed;inset:0;z-index:200;background:rgba(32,30,29,.55);
+      backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
+    .mbox{background:#fff9f0;border:1px solid var(--card-border);border-radius:20px;
+      padding:30px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+      box-shadow:0 24px 60px rgba(46,42,37,.25);animation:modalIn .22s ease}
+    .mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+    .mh h3{font-size:20px}
+    .mcls{width:30px;height:30px;border-radius:7px;background:#ede0cd;
+      border:1px solid var(--bdr);color:var(--t2);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .18s}
+    .mcls:hover{background:#e2d2bd;color:var(--t1)}
+    .mf{display:flex;gap:9px;justify-content:flex-end;margin-top:22px}
+    #merr{display:none;background:var(--err-bg);border:1px solid rgba(156,42,28,.28);
+      color:var(--err);padding:10px 13px;border-radius:var(--rs);font-size:13px;margin-bottom:14px}
+
+    /* ─ TOAST ─ */
+    #tc{position:fixed;bottom:22px;right:22px;z-index:999;display:flex;flex-direction:column;gap:9px}
+    .toast{display:flex;align-items:center;gap:9px;background:#2e2b25;color:#f9f4ed;
+      border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 18px;font-size:14px;
+      box-shadow:0 10px 30px rgba(46,42,37,.25);animation:slideUp .28s ease;min-width:240px}
+    .toast.ok{border-left:4px solid var(--sage-l)}
+    .toast.er{border-left:4px solid #ef4444}
+
+    /* ─ CONFIRM ─ */
+    #conf{display:none;position:fixed;inset:0;z-index:300;
+      background:rgba(32,30,29,.6);backdrop-filter:blur(4px);
+      align-items:center;justify-content:center}
+    #conf.show{display:flex}
+    .cbox{background:#fff9f0;border:1px solid var(--card-border);border-radius:18px;
+      padding:26px;max-width:380px;width:90%;box-shadow:0 20px 50px rgba(46,42,37,.25);
+      animation:modalIn .2s ease}
+    .cbox h4{font-size:18px;margin-bottom:7px}
+    .cbox p{font-size:14px;color:var(--t2);margin-bottom:20px}
+    .ca{display:flex;gap:9px}
+
+    /* ─ ANIMATIONS ─ */
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes modalIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lcard">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+      <div class="lang-toggle">
+        <button type="button" class="lang-btn on" data-lang="en" onclick="setAdminLang('en')">EN</button>
+        <button type="button" class="lang-btn" data-lang="hi" onclick="setAdminLang('hi')">हिंदी</button>
+      </div>
+    </div>
+    <div class="llogo">
+      <div class="llogo-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/><path d="M6 14h6"/></svg>
+      </div>
+      <div>
+        <h1>Mandi Ledger</h1>
+        <p id="l-plat-lbl">Platform Admin</p>
+      </div>
+    </div>
+    <h2 id="l-welc">Welcome back</h2>
+    <p class="sub" id="l-sub">Sign in to your super-admin account</p>
+    <div id="lerr"></div>
+    <form id="lform">
+      <div class="fg">
+        <label for="lemail" id="l-lbl-email">Email Address</label>
+        <input type="email" id="lemail" placeholder="admin@mandiledger.com" autocomplete="email" required />
+      </div>
+      <div class="fg">
+        <label for="lpass" id="l-lbl-pass">Password</label>
+        <input type="password" id="lpass" placeholder="••••••••" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn btn-p btn-full" id="lbtn">
+        <span id="lbtn-t">Sign In</span>
+        <div class="spin" id="lspin" style="display:none"></div>
+      </button>
+    </form>
+    <p id="l-note" style="margin-top:18px;font-size:12px;color:var(--t3);text-align:center">
+      Default: admin@mandiledger.com / admin123
+    </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/><path d="M6 14h6"/></svg>
+      </div>
+      <h1>Mandi Ledger <span id="tb-badge">Admin</span></h1>
+    </div>
+    <div class="tb-right">
+      <div class="lang-toggle">
+        <button type="button" class="lang-btn on" data-lang="en" onclick="setAdminLang('en')">EN</button>
+        <button type="button" class="lang-btn" data-lang="hi" onclick="setAdminLang('hi')">हिंदी</button>
+      </div>
+      <div class="achip">
+        <div class="achip-av" id="aav">A</div>
+        <span id="aname">Admin</span>
+      </div>
+      <button class="btn btn-s btn-sm" id="logoutbtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="nav-lbl" id="sb-lbl-main">Main</div>
+      <div class="nav-item on" data-pg="dashboard" id="nav-dashboard">
+        <span class="nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span>
+        <span id="sb-nav-dash">Dashboard</span>
+        <span class="nav-dot"></span>
+      </div>
+      <div class="nav-item" data-pg="stores" id="nav-stores">
+        <span class="nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7"/></svg></span>
+        <span id="sb-nav-stores">Stores</span>
+        <span class="nav-dot"></span>
+      </div>
+      <div class="nav-item" data-pg="users" id="nav-users">
+        <span class="nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span id="sb-nav-users">Users</span>
+        <span class="nav-dot"></span>
+      </div>
+      <div class="sb-footer">
+        <div class="nav-item" id="sb-logout">
+          <span class="nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span>
+          <span id="sb-signout">Sign Out</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- DASHBOARD -->
+      <div class="page on" id="page-dashboard">
+        <div class="ph">
+          <div><h2 id="dsh-h2">Dashboard</h2><p id="dsh-p">Platform overview</p></div>
+          <div style="display:flex;gap:9px">
+            <button class="btn btn-s btn-sm" id="refreshbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg><span id="refreshbtn-t">Refresh</span></button>
+            <button class="btn btn-p btn-sm" id="dsh-newstore">+ New Store</button>
+          </div>
+        </div>
+        <div class="sg">
+          <div class="sc"><div class="sc-lbl" id="sc-lbl-tot">Total Stores</div><div class="sc-val" id="s-tot">—</div><div class="sc-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7"/></svg></div></div>
+          <div class="sc"><div class="sc-lbl" id="sc-lbl-act">Active Stores</div><div class="sc-val" id="s-act">—</div><div class="sc-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div></div>
+          <div class="sc"><div class="sc-lbl" id="sc-lbl-usr">Total Users</div><div class="sc-val" id="s-usr">—</div><div class="sc-ico"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div>
+        </div>
+        <div class="ph" style="margin-top:8px;margin-bottom:14px">
+          <div><h2 style="font-size:17px" id="dsh-recent-h2">Recent Stores</h2></div>
+        </div>
+        <div class="sg2" id="dsh-grid">
+          <div class="empty"><div class="empty-ico"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7"/></svg></div><p id="dsh-empty-p">No stores yet</p></div>
+        </div>
+      </div>
+
+      <!-- STORES -->
+      <div class="page" id="page-stores">
+        <div class="ph">
+          <div><h2 id="stores-h2">Stores</h2><p id="stores-p">Manage all stores on the platform</p></div>
+          <button class="btn btn-p" id="newstore-btn">+ New Store</button>
+        </div>
+        <div class="toolbar">
+          <div class="sbox"><span class="sbox-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="st-q" placeholder="Search stores…" /></div>
+          <select class="fsel" id="st-fil">
+            <option value="all" id="opt-st-all">All stores</option>
+            <option value="active" id="opt-st-act">Active only</option>
+            <option value="inactive" id="opt-st-inact">Inactive only</option>
+          </select>
+        </div>
+        <div class="sg2" id="stores-grid">
+          <div class="empty"><div class="empty-ico"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7"/></svg></div><p id="st-grid-empty">Loading…</p></div>
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div class="page" id="page-users">
+        <div class="ph">
+          <div><h2 id="users-h2">Users</h2><p id="users-p">Manage users for each store</p></div>
+          <button class="btn btn-p" id="newuser-btn">+ Add User</button>
+        </div>
+        <div class="ssel">
+          <label id="lbl-ssel">Store:</label>
+          <select id="usr-store-sel"><option value="">— Select a store —</option></select>
+        </div>
+        <div class="toolbar">
+          <div class="sbox"><span class="sbox-ico"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><input type="text" id="usr-q" placeholder="Search users…" /></div>
+          <select class="fsel" id="usr-rol-fil">
+            <option value="all" id="opt-usr-all">All roles</option>
+            <option value="OWNER" id="opt-usr-own">Owner</option>
+            <option value="STAFF" id="opt-usr-stf">Staff</option>
+          </select>
+        </div>
+        <div class="tw">
+          <table>
+            <thead>
+              <tr>
+                <th id="th-user">User</th><th id="th-role">Role</th><th id="th-status">Status</th><th id="th-joined">Joined</th>
+                <th style="text-align:right" id="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usr-tbody">
+              <tr><td colspan="5"><div class="empty"><div class="empty-ico"><svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><p id="usr-empty-p">Select a store to view users</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="mo" id="mo" style="display:none">
+  <div class="mbox">
+    <div class="mh">
+      <h3 id="mtitle">Modal</h3>
+      <button class="mcls" id="mcls" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div id="merr"></div>
+    <div id="mbody"></div>
+    <div class="mf" id="mfoot"></div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div id="conf">
+  <div class="cbox">
+    <h4 id="ctitle">Are you sure?</h4>
+    <p id="cmsg">This action cannot be undone.</p>
+    <div class="ca">
+      <button class="btn btn-s" id="cno" style="flex:1">Cancel</button>
+      <button class="btn btn-d" id="cyes" style="flex:1">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="tc"></div>
+
+<script>
+'use strict';
+// ── CONFIG ────────────────────────────────────────────
+const API = 'http://localhost:4000';
+
+// ── STATE ─────────────────────────────────────────────
+let tok = localStorage.getItem('adm_tok') || '';
+let me = JSON.parse(localStorage.getItem('adm_me') || 'null');
+let stores = [];
+let users = [];
+let selStore = '';
+let curPg = 'dashboard';
+let adminLang = localStorage.getItem('mandi_admin_lang') || 'en';
+
+// ── I18N DICTIONARY ───────────────────────────────────
+const I18N = {
+  en: {
+    badgeAdmin: 'Admin',
+    platformAdmin: 'Platform Admin',
+    welcomeBack: 'Welcome back',
+    signInSub: 'Sign in to your super-admin account',
+    emailLabel: 'Email Address',
+    passwordLabel: 'Password',
+    signInBtn: 'Sign In',
+    signingIn: 'Signing in…',
+    defaultCreds: 'Default: admin@mandiledger.com / admin123',
+    logout: 'Logout',
+    mainMenu: 'Main',
+    dashboard: 'Dashboard',
+    stores: 'Stores',
+    users: 'Users',
+    signOut: 'Sign Out',
+    platformOverview: 'Platform overview',
+    refresh: 'Refresh',
+    newStore: '+ New Store',
+    totalStores: 'Total Stores',
+    activeStores: 'Active Stores',
+    totalUsers: 'Total Users',
+    recentStores: 'Recent Stores',
+    noStoresYet: 'No stores yet',
+    noStoresFound: 'No stores found',
+    manageStores: 'Manage all stores on the platform',
+    searchStores: 'Search stores…',
+    allStores: 'All stores',
+    activeOnly: 'Active only',
+    inactiveOnly: 'Inactive only',
+    loading: 'Loading…',
+    manageUsers: 'Manage users for each store',
+    addUser: '+ Add User',
+    storeSelectLabel: 'Store:',
+    selectStorePlaceholder: '— Select a store —',
+    searchUsers: 'Search users…',
+    allRoles: 'All roles',
+    roleOwner: 'Owner',
+    roleStaff: 'Staff',
+    thUser: 'User',
+    thRole: 'Role',
+    thStatus: 'Status',
+    thJoined: 'Joined',
+    thActions: 'Actions',
+    selectStoreToViewUsers: 'Select a store to view users',
+    noUsersFound: 'No users found',
+    cardUsers: 'Users',
+    cardItems: 'Items',
+    cardBills: 'Bills',
+    statusActive: 'Active',
+    statusInactive: 'Inactive',
+    btnEdit: 'Edit',
+    btnUsers: 'Users',
+    btnDelete: 'Delete',
+    btnCancel: 'Cancel',
+    createStoreTitle: 'Create New Store',
+    editStoreTitle: 'Edit Store',
+    storeNameLabel: 'Store Name *',
+    ownerNameLabel: 'Owner Name (Optional)',
+    cityLabel: 'City (Optional)',
+    phoneLabel: 'Phone (Optional)',
+    addressLabel: 'Address (Optional)',
+    gstNoteLabel: 'GST Note (Optional / Not Required)',
+    statusLabel: 'Status',
+    createStoreBtn: 'Create Store',
+    saveChangesBtn: 'Save Changes',
+    creating: 'Creating…',
+    saving: 'Saving…',
+    adding: 'Adding…',
+    storeCreatedToast: 'Store created!',
+    storeUpdatedToast: 'Store updated!',
+    storeDeletedToast: (name) => `"${name}" deleted`,
+    delStoreTitle: 'Delete Store?',
+    delStoreMsg: (name) => `Permanently delete "${name}" and all its data?`,
+    addUserTitle: (sname) => `Add User — ${sname}`,
+    editUserTitle: 'Edit User',
+    fullNameLabel: 'Full Name *',
+    emailLabelReq: 'Email *',
+    passwordLabelReq: 'Password *',
+    newPasswordLabel: 'New Password',
+    newPasswordPlaceholder: 'Leave blank to keep current',
+    userAddedToast: 'User added!',
+    userUpdatedToast: 'User updated!',
+    userRemovedToast: (name) => `"${name}" removed`,
+    delUserTitle: 'Remove User?',
+    delUserMsg: (name) => `Remove "${name}" from this store?`,
+    selectStoreFirstToast: 'Please select a store first',
+    storeNameReqErr: 'Store name is required',
+    userFieldsReqErr: 'Name, email and password are required',
+    userUpdateFieldsReqErr: 'Name and email are required',
+    confirmDeleteBtn: 'Delete',
+    confirmCancelBtn: 'Cancel',
+  },
+  hi: {
+    badgeAdmin: 'व्यवस्थापक',
+    platformAdmin: 'प्लेटफ़ॉर्म एडमिन',
+    welcomeBack: 'वापसी पर स्वागत है',
+    signInSub: 'अपने सुपर-एडमिन खाते में साइन इन करें',
+    emailLabel: 'ईमेल पता',
+    passwordLabel: 'पासवर्ड',
+    signInBtn: 'साइन इन करें',
+    signingIn: 'साइन इन हो रहा है…',
+    defaultCreds: 'डिफ़ॉल्ट: admin@mandiledger.com / admin123',
+    logout: 'लॉगआउट',
+    mainMenu: 'मुख्य मेन्यू',
+    dashboard: 'डैशबोर्ड',
+    stores: 'दुकानें',
+    users: 'उपयोगकर्ता',
+    signOut: 'साइन आउट',
+    platformOverview: 'प्लेटफ़ॉर्म विवरण',
+    refresh: 'रीफ़्रेश',
+    newStore: '+ नई दुकान',
+    totalStores: 'कुल दुकानें',
+    activeStores: 'सक्रिय दुकानें',
+    totalUsers: 'कुल उपयोगकर्ता',
+    recentStores: 'हाल की दुकानें',
+    noStoresYet: 'अभी कोई दुकान नहीं है',
+    noStoresFound: 'कोई दुकान नहीं मिली',
+    manageStores: 'प्लेटफ़ॉर्म पर सभी दुकानें प्रबंधित करें',
+    searchStores: 'दुकान खोजें…',
+    allStores: 'सभी दुकानें',
+    activeOnly: 'केवल सक्रिय',
+    inactiveOnly: 'केवल निष्क्रिय',
+    loading: 'लोड हो रहा है…',
+    manageUsers: 'प्रत्येक दुकान के उपयोगकर्ता प्रबंधित करें',
+    addUser: '+ नया उपयोगकर्ता',
+    storeSelectLabel: 'दुकान:',
+    selectStorePlaceholder: '— दुकान चुनें —',
+    searchUsers: 'उपयोगकर्ता खोजें…',
+    allRoles: 'सभी पद',
+    roleOwner: 'मालिक',
+    roleStaff: 'कर्मचारी',
+    thUser: 'उपयोगकर्ता',
+    thRole: 'पद',
+    thStatus: 'स्थिति',
+    thJoined: 'शामिल हुए',
+    thActions: 'कार्रवाई',
+    selectStoreToViewUsers: 'उपयोगकर्ता देखने के लिए दुकान चुनें',
+    noUsersFound: 'कोई उपयोगकर्ता नहीं मिला',
+    cardUsers: 'कर्मचारी',
+    cardItems: 'सामान',
+    cardBills: 'बिल',
+    statusActive: 'सक्रिय',
+    statusInactive: 'निष्क्रिय',
+    btnEdit: 'संपादन',
+    btnUsers: 'उपयोगकर्ता',
+    btnDelete: 'हटाएं',
+    btnCancel: 'रद्द करें',
+    createStoreTitle: 'नई दुकान जोड़ें',
+    editStoreTitle: 'दुकान विवरण बदलें',
+    storeNameLabel: 'दुकान का नाम *',
+    ownerNameLabel: 'मालिक का नाम (वैकल्पिक)',
+    cityLabel: 'शहर (वैकल्पिक)',
+    phoneLabel: 'फ़ोन नंबर (वैकल्पिक)',
+    addressLabel: 'पता (वैकल्पिक)',
+    gstNoteLabel: 'जीएसटी नोट (वैकल्पिक / जरूरी नहीं)',
+    statusLabel: 'स्थिति',
+    createStoreBtn: 'दुकान बनाएं',
+    saveChangesBtn: 'बदलाव सहेजें',
+    creating: 'बनाया जा रहा है…',
+    saving: 'सहेजा जा रहा है…',
+    adding: 'जोड़ा जा रहा है…',
+    storeCreatedToast: 'दुकान सफलतापूर्वक बनाई गई!',
+    storeUpdatedToast: 'दुकान अपडेट हो गई!',
+    storeDeletedToast: (name) => `"${name}" दुकान हटा दी गई`,
+    delStoreTitle: 'दुकान हटाएं?',
+    delStoreMsg: (name) => `क्या आप "${name}" और उसका सारा डेटा हमेशा के लिए हटाना चाहते हैं?`,
+    addUserTitle: (sname) => `उपयोगकर्ता जोड़ें — ${sname}`,
+    editUserTitle: 'उपयोगकर्ता विवरण बदलें',
+    fullNameLabel: 'पूरा नाम *',
+    emailLabelReq: 'ईमेल *',
+    passwordLabelReq: 'पासवर्ड *',
+    newPasswordLabel: 'नया पासवर्ड',
+    newPasswordPlaceholder: 'वर्तमान पासवर्ड रखने के लिए खाली छोड़ें',
+    userAddedToast: 'उपयोगकर्ता सफलतापूर्वक जोड़ा गया!',
+    userUpdatedToast: 'उपयोगकर्ता अपडेट हो गया!',
+    userRemovedToast: (name) => `"${name}" को हटा दिया गया`,
+    delUserTitle: 'उपयोगकर्ता हटाएं?',
+    delUserMsg: (name) => `क्या आप "${name}" को इस दुकान से हटाना चाहते हैं?`,
+    selectStoreFirstToast: 'कृपया पहले कोई दुकान चुनें',
+    storeNameReqErr: 'दुकान का नाम आवश्यक है',
+    userFieldsReqErr: 'नाम, ईमेल और पासवर्ड आवश्यक हैं',
+    userUpdateFieldsReqErr: 'नाम और ईमेल आवश्यक हैं',
+    confirmDeleteBtn: 'हटाएं',
+    confirmCancelBtn: 'रद्द करें',
+  }
+};
+
+function t(key, ...args){
+  const dict = I18N[adminLang] || I18N.en;
+  const val = dict[key] !== undefined ? dict[key] : (I18N.en[key] !== undefined ? I18N.en[key] : key);
+  return typeof val === 'function' ? val(...args) : val;
+}
+
+function setAdminLang(l){
+  adminLang = (l === 'hi') ? 'hi' : 'en';
+  localStorage.setItem('mandi_admin_lang', adminLang);
+  document.querySelectorAll('.lang-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.lang === adminLang);
+  });
+  applyAdminLang();
+}
+
+function applyAdminLang(){
+  // Login
+  if($('l-plat-lbl')) $('l-plat-lbl').textContent = t('platformAdmin');
+  if($('l-welc')) $('l-welc').textContent = t('welcomeBack');
+  if($('l-sub')) $('l-sub').textContent = t('signInSub');
+  if($('l-lbl-email')) $('l-lbl-email').textContent = t('emailLabel');
+  if($('l-lbl-pass')) $('l-lbl-pass').textContent = t('passwordLabel');
+  if($('lbtn-t')) $('lbtn-t').textContent = t('signInBtn');
+  if($('l-note')) $('l-note').textContent = t('defaultCreds');
+
+  // Topbar
+  if($('tb-badge')) $('tb-badge').textContent = t('badgeAdmin');
+  if($('logoutbtn')) $('logoutbtn').textContent = t('logout');
+
+  // Sidebar
+  if($('sb-lbl-main')) $('sb-lbl-main').textContent = t('mainMenu');
+  if($('sb-nav-dash')) $('sb-nav-dash').textContent = t('dashboard');
+  if($('sb-nav-stores')) $('sb-nav-stores').textContent = t('stores');
+  if($('sb-nav-users')) $('sb-nav-users').textContent = t('users');
+  if($('sb-signout')) $('sb-signout').textContent = t('signOut');
+
+  // Dashboard
+  if($('dsh-h2')) $('dsh-h2').textContent = t('dashboard');
+  if($('dsh-p')) $('dsh-p').textContent = t('platformOverview');
+  if($('refreshbtn-t')) $('refreshbtn-t').textContent = t('refresh');
+  if($('dsh-newstore')) $('dsh-newstore').textContent = t('newStore');
+  if($('sc-lbl-tot')) $('sc-lbl-tot').textContent = t('totalStores');
+  if($('sc-lbl-act')) $('sc-lbl-act').textContent = t('activeStores');
+  if($('sc-lbl-usr')) $('sc-lbl-usr').textContent = t('totalUsers');
+  if($('dsh-recent-h2')) $('dsh-recent-h2').textContent = t('recentStores');
+
+  // Stores
+  if($('stores-h2')) $('stores-h2').textContent = t('stores');
+  if($('stores-p')) $('stores-p').textContent = t('manageStores');
+  if($('newstore-btn')) $('newstore-btn').textContent = t('newStore');
+  if($('st-q')) $('st-q').placeholder = t('searchStores');
+  if($('opt-st-all')) $('opt-st-all').textContent = t('allStores');
+  if($('opt-st-act')) $('opt-st-act').textContent = t('activeOnly');
+  if($('opt-st-inact')) $('opt-st-inact').textContent = t('inactiveOnly');
+
+  // Users
+  if($('users-h2')) $('users-h2').textContent = t('users');
+  if($('users-p')) $('users-p').textContent = t('manageUsers');
+  if($('newuser-btn')) $('newuser-btn').textContent = t('addUser');
+  if($('lbl-ssel')) $('lbl-ssel').textContent = t('storeSelectLabel');
+  if($('usr-q')) $('usr-q').placeholder = t('searchUsers');
+  if($('opt-usr-all')) $('opt-usr-all').textContent = t('allRoles');
+  if($('opt-usr-own')) $('opt-usr-own').textContent = t('roleOwner');
+  if($('opt-usr-stf')) $('opt-usr-stf').textContent = t('roleStaff');
+  if($('th-user')) $('th-user').textContent = t('thUser');
+  if($('th-role')) $('th-role').textContent = t('thRole');
+  if($('th-status')) $('th-status').textContent = t('thStatus');
+  if($('th-joined')) $('th-joined').textContent = t('thJoined');
+  if($('th-actions')) $('th-actions').textContent = t('thActions');
+
+  // Re-render lists
+  if(curPg === 'dashboard'){
+    renderStoreCards($('dsh-grid'), stores.slice(0,6));
+  } else if(curPg === 'stores'){
+    renderFiltered();
+  } else if(curPg === 'users'){
+    populateStoreSel();
+    if(selStore) renderUserFiltered();
+    else if($('usr-empty-p')) $('usr-empty-p').textContent = t('selectStoreToViewUsers');
+  }
+}
+
+// ── HELPERS ───────────────────────────────────────────
+const $= id => document.getElementById(id);
+function initials(n){ return (n||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?'; }
+function fmtDate(d){ return new Date(d).toLocaleDateString(adminLang==='hi'?'hi-IN':'en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+function storeColor(name){
+  const C=['#b2622d', '#728157', '#a19786', '#56633f', '#c67139', '#8c491a', '#645c50', '#d67f48'];
+  let h=0; for(const c of (name||'')) h=(h*31+c.charCodeAt(0))&0xffff;
+  return C[h%C.length];
+}
+
+async function apiFetch(path, opts={}){
+  const r = await fetch(API+path,{
+    headers:{'Content-Type':'application/json',...(tok?{Authorization:`Bearer ${tok}`}:{}),...(opts.headers||{})},
+    ...opts
+  });
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||`HTTP ${r.status}`);
+  return d;
+}
+
+function toast(msg, type='ok'){
+  const ic = type==='ok'
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--sage-l)"><path d="M20 6 9 17l-5-5"/></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#ef4444"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+  const tDiv = document.createElement('div');
+  tDiv.className=`toast ${type}`;
+  tDiv.innerHTML=`<span style="display:flex;align-items:center">${ic}</span><span>${msg}</span>`;
+  $('tc').prepend(tDiv);
+  setTimeout(()=>tDiv.remove(), 3400);
+}
+
+function showConfirm(title,msg){
+  return new Promise(res=>{
+    $('ctitle').textContent=title; $('cmsg').textContent=msg;
+    $('cno').textContent=t('confirmCancelBtn');
+    $('cyes').textContent=t('confirmDeleteBtn');
+    $('conf').classList.add('show');
+    const cleanup=val=>{
+      $('conf').classList.remove('show');
+      $('cyes').onclick=null; $('cno').onclick=null;
+      res(val);
+    };
+    $('cyes').onclick=()=>cleanup(true);
+    $('cno').onclick=()=>cleanup(false);
+  });
+}
+
+// ── MODAL ─────────────────────────────────────────────
+function openModal(title, body, foot){
+  $('mtitle').textContent=title;
+  $('mbody').innerHTML=body;
+  $('mfoot').innerHTML=foot;
+  $('merr').style.display='none'; $('merr').textContent='';
+  $('mo').style.display='flex';
+}
+function closeModal(){ $('mo').style.display='none'; }
+$('mcls').onclick=closeModal;
+$('mo').onclick=e=>{ if(e.target===$('mo')) closeModal(); };
+function modalErr(m){ $('merr').textContent=m; $('merr').style.display='block'; }
+
+// ── AUTH ──────────────────────────────────────────────
+$('lform').onsubmit=async e=>{
+  e.preventDefault();
+  $('lbtn').disabled=true; $('lbtn-t').textContent=t('signingIn'); $('lspin').style.display='block';
+  $('lerr').style.display='none';
+  try{
+    const data = await apiFetch('/admin/login',{method:'POST',
+      body:JSON.stringify({email:$('lemail').value,password:$('lpass').value})});
+    tok=data.token; me=data.admin;
+    localStorage.setItem('adm_tok',tok); localStorage.setItem('adm_me',JSON.stringify(me));
+    initApp();
+  }catch(err){
+    $('lerr').textContent=err.message; $('lerr').style.display='block';
+  }finally{
+    $('lbtn').disabled=false; $('lbtn-t').textContent=t('signInBtn'); $('lspin').style.display='none';
+  }
+};
+
+function doLogout(){
+  tok=''; me=null; stores=[]; users=[];
+  localStorage.removeItem('adm_tok'); localStorage.removeItem('adm_me');
+  $('app').classList.remove('show'); $('login').style.display='flex';
+}
+$('logoutbtn').onclick=doLogout; $('sb-logout').onclick=doLogout;
+
+// ── NAV ───────────────────────────────────────────────
+function navigate(pg){
+  document.querySelectorAll('.nav-item[data-pg]').forEach(n=>n.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  $(`nav-${pg}`).classList.add('on'); $(`page-${pg}`).classList.add('on');
+  curPg=pg;
+  if(pg==='dashboard') loadDashboard();
+  else if(pg==='stores') loadStores();
+  else if(pg==='users') loadUsersPage();
+}
+document.querySelectorAll('.nav-item[data-pg]').forEach(n=>{ n.onclick=()=>navigate(n.dataset.pg); });
+$('dsh-newstore').onclick=()=>{ navigate('stores'); openCreateStore(); };
+
+// ── DASHBOARD ─────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const [stats,list]=await Promise.all([apiFetch('/admin/stats'),apiFetch('/admin/stores')]);
+    stores=list;
+    $('s-tot').textContent=stats.totalStores;
+    $('s-act').textContent=stats.activeStores;
+    $('s-usr').textContent=stats.totalUsers;
+    renderStoreCards($('dsh-grid'), stores.slice(0,6));
+    populateStoreSel();
+  }catch(err){ toast(err.message,'er'); }
+}
+$('refreshbtn').onclick=loadDashboard;
+
+// ── STORES ────────────────────────────────────────────
+async function loadStores(){
+  try{ stores=await apiFetch('/admin/stores'); renderFiltered(); populateStoreSel(); }
+  catch(err){ toast(err.message,'er'); }
+}
+function renderFiltered(){
+  const q=$('st-q').value.toLowerCase();
+  const f=$('st-fil').value;
+  let list=stores.filter(s=>{
+    const m=s.name.toLowerCase().includes(q)||s.ownerName.toLowerCase().includes(q)||s.city.toLowerCase().includes(q);
+    if(f==='active') return m&&s.active;
+    if(f==='inactive') return m&&!s.active;
+    return m;
+  });
+  renderStoreCards($('stores-grid'),list);
+}
+$('st-q').oninput=renderFiltered; $('st-fil').onchange=renderFiltered;
+
+const SVG = {
+  storeEmpty: `<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v5a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7"/></svg>`,
+  usersEmpty: `<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  userSingleEmpty: `<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  edit: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>`,
+  users: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>`,
+  trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+  userMeta: `<svg class="meta-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+  pinMeta: `<svg class="meta-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  phoneMeta: `<svg class="meta-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  calMeta: `<svg class="meta-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+};
+
+function renderStoreCards(container, list){
+  if(!list.length){
+    container.innerHTML=`<div class="empty"><div class="empty-ico">${SVG.storeEmpty}</div><p>${t('noStoresFound')}</p></div>`;
+    return;
+  }
+  container.innerHTML='';
+  list.forEach(s=>{
+    const clr=storeColor(s.name), cnt=s._count||{};
+    const d=document.createElement('div'); d.className='stcard';
+    d.onmousemove=e=>{
+      const r=d.getBoundingClientRect();
+      d.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+      d.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');
+    };
+    d.innerHTML=`
+      <div class="sth">
+        <div class="stav" style="background:${clr}22;color:${clr};border:2px solid ${clr}44">${initials(s.name)}</div>
+        <span class="bdg ${s.active?'bdg-ok':'bdg-no'}"><span class="bdg-dot"></span>${s.active?t('statusActive'):t('statusInactive')}</span>
+      </div>
+      <div class="stn">${esc(s.name)}</div>
+      ${s.ownerName?`<div class="st-meta-row">${SVG.userMeta}<span>${esc(s.ownerName)}</span></div>`:''}
+      <div class="stm">
+        ${s.city?`<span>${SVG.pinMeta}${esc(s.city)}</span>`:''}
+        ${s.phone?`<span>${SVG.phoneMeta}${esc(s.phone)}</span>`:''}
+        <span>${SVG.calMeta}${fmtDate(s.createdAt)}</span>
+      </div>
+      <div class="stst">
+        <div class="stst-i"><div class="stst-v">${cnt.users??0}</div><div class="stst-l">${t('cardUsers')}</div></div>
+        <div class="stst-i"><div class="stst-v">${cnt.items??0}</div><div class="stst-l">${t('cardItems')}</div></div>
+        <div class="stst-i"><div class="stst-v">${cnt.bills??0}</div><div class="stst-l">${t('cardBills')}</div></div>
+      </div>
+      <div class="sta">
+        <button class="btn btn-s btn-sm" style="flex:1" onclick="openEditStore('${s.id}')">${SVG.edit} ${t('btnEdit')}</button>
+        <button class="btn btn-ok btn-sm" onclick="goUsers('${s.id}')">${SVG.users} ${t('btnUsers')}</button>
+        <button class="btn btn-d btn-sm btn-ico" title="${t('btnDelete')}" onclick="delStore('${s.id}','${esc(s.name)}')">${SVG.trash}</button>
+      </div>`;
+    container.appendChild(d);
+  });
+}
+function esc(s){ return String(s||'').replace(/[<>"'&]/g,c=>({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c])); }
+
+function populateStoreSel(){
+  const sel=$('usr-store-sel'), prev=sel.value;
+  sel.innerHTML=`<option value="">${t('selectStorePlaceholder')}</option>`;
+  stores.forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.name+(s.active?'':` (${t('statusInactive')})`); sel.appendChild(o); });
+  if(prev && stores.find(s=>s.id===prev)) sel.value=prev;
+}
+
+function getStoreFormHtml(){
+  return `
+  <div class="fg"><label>${t('storeNameLabel')}</label><input id="f-sn" placeholder="e.g. Ram Vegetable Shop" required /></div>
+  <div class="fg"><label>${t('ownerNameLabel')}</label><input id="f-so" placeholder="e.g. Ramesh Kumar" /></div>
+  <div class="fg"><label>${t('cityLabel')}</label><input id="f-sc" placeholder="e.g. Nagpur" /></div>
+  <div class="fg"><label>${t('phoneLabel')}</label><input id="f-sp" placeholder="e.g. 9876543210" /></div>
+  <div class="fg"><label>${t('addressLabel')}</label><textarea id="f-sa" placeholder="Full address…"></textarea></div>
+  <div class="fg"><label>${t('gstNoteLabel')}</label><input id="f-sg" placeholder="Optional (e.g. GSTIN 27XXXXX)" /></div>
+  <div class="fg"><label>${t('statusLabel')}</label><select id="f-sact"><option value="true">${t('statusActive')}</option><option value="false">${t('statusInactive')}</option></select></div>`;
+}
+
+function openCreateStore(){
+  openModal(t('createStoreTitle'), getStoreFormHtml(),
+    `<button class="btn btn-s" onclick="closeModal()">${t('btnCancel')}</button>
+     <button class="btn btn-p" id="ms-btn">${t('createStoreBtn')}</button>`);
+  $('ms-btn').onclick=submitCreateStore;
+}
+async function submitCreateStore(){
+  const n=$('f-sn').value.trim();
+  if(!n){ modalErr(t('storeNameReqErr')); return; }
+  try{
+    $('ms-btn').disabled=true; $('ms-btn').textContent=t('creating');
+    const gstVal = ($('f-sg')?.value || '').trim();
+    await apiFetch('/admin/stores',{method:'POST',body:JSON.stringify({
+      name:n,
+      ownerName:($('f-so')?.value || '').trim(),
+      city:($('f-sc')?.value || '').trim(),
+      phone:($('f-sp')?.value || '').trim(),
+      address:($('f-sa')?.value || '').trim(),
+      gstNote: gstVal || '',
+      active:$('f-sact').value==='true'
+    })});
+    closeModal(); toast(t('storeCreatedToast'));
+    curPg==='stores'?loadStores():loadDashboard();
+  }catch(err){ modalErr(err.message); }
+  finally{ const b=$('ms-btn'); if(b){b.disabled=false;b.textContent=t('createStoreBtn');} }
+}
+
+async function openEditStore(id){
+  const s=stores.find(x=>x.id===id); if(!s) return;
+  openModal(t('editStoreTitle'), getStoreFormHtml(),
+    `<button class="btn btn-s" onclick="closeModal()">${t('btnCancel')}</button>
+     <button class="btn btn-p" id="ms-btn">${t('saveChangesBtn')}</button>`);
+  $('f-sn').value=s.name||''; $('f-so').value=s.ownerName||''; $('f-sc').value=s.city||'';
+  $('f-sp').value=s.phone||''; $('f-sa').value=s.address||''; $('f-sg').value=s.gstNote||'';
+  $('f-sact').value=s.active?'true':'false';
+  $('ms-btn').onclick=async()=>{
+    const n=$('f-sn').value.trim(); if(!n){modalErr(t('storeNameReqErr'));return;}
+    try{
+      $('ms-btn').disabled=true; $('ms-btn').textContent=t('saving');
+      const gstVal = ($('f-sg')?.value || '').trim();
+      await apiFetch(`/admin/stores/${id}`,{method:'PATCH',body:JSON.stringify({
+        name:n,
+        ownerName:($('f-so')?.value || '').trim(),
+        city:($('f-sc')?.value || '').trim(),
+        phone:($('f-sp')?.value || '').trim(),
+        address:($('f-sa')?.value || '').trim(),
+        gstNote: gstVal || '',
+        active:$('f-sact').value==='true'
+      })});
+      closeModal(); toast(t('storeUpdatedToast'));
+      curPg==='stores'?loadStores():loadDashboard();
+    }catch(err){modalErr(err.message);}
+    finally{const b=$('ms-btn');if(b){b.disabled=false;b.textContent=t('saveChangesBtn');}}
+  };
+}
+async function delStore(id,name){
+  const ok=await showConfirm(t('delStoreTitle'), t('delStoreMsg', name));
+  if(!ok)return;
+  try{
+    await apiFetch(`/admin/stores/${id}`,{method:'DELETE'});
+    toast(t('storeDeletedToast', name));
+    curPg==='stores'?loadStores():loadDashboard();
+  }catch(err){toast(err.message,'er');}
+}
+$('newstore-btn').onclick=openCreateStore;
+
+// ── USERS ─────────────────────────────────────────────
+function loadUsersPage(){
+  if(!stores.length) loadStores().then(populateStoreSel);
+}
+function goUsers(storeId){
+  navigate('users');
+  $('usr-store-sel').value=storeId; selStore=storeId; loadUsers(storeId);
+}
+$('usr-store-sel').onchange=function(){
+  selStore=this.value;
+  if(selStore) loadUsers(selStore);
+  else $('usr-tbody').innerHTML=`<tr><td colspan="5"><div class="empty"><div class="empty-ico">${SVG.usersEmpty}</div><p>${t('selectStoreToViewUsers')}</p></div></td></tr>`;
+};
+$('usr-q').oninput=renderUserFiltered; $('usr-rol-fil').onchange=renderUserFiltered;
+
+async function loadUsers(storeId){
+  $('usr-tbody').innerHTML=`<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--t2)">${t('loading')}</td></tr>`;
+  try{ users=await apiFetch(`/admin/stores/${storeId}/users`); renderUserFiltered(); }
+  catch(err){ toast(err.message,'er'); }
+}
+function renderUserFiltered(){
+  const q=$('usr-q').value.toLowerCase(), rl=$('usr-rol-fil').value;
+  let list=users.filter(u=>{
+    const m=u.name.toLowerCase().includes(q)||u.email.toLowerCase().includes(q);
+    return rl==='all'?m:m&&u.role===rl;
+  });
+  if(!list.length){
+    $('usr-tbody').innerHTML=`<tr><td colspan="5"><div class="empty"><div class="empty-ico">${SVG.userSingleEmpty}</div><p>${t('noUsersFound')}</p></div></td></tr>`;
+    return;
+  }
+  $('usr-tbody').innerHTML=list.map(u=>`
+    <tr>
+      <td><div class="uc"><div class="uav">${initials(u.name)}</div>
+        <div><div class="un">${esc(u.name)}</div><div class="ue">${esc(u.email)}</div></div></div></td>
+      <td><span class="rbdg ${u.role==='OWNER'?'r-owner':'r-staff'}">${u.role==='OWNER'?t('roleOwner'):t('roleStaff')}</span></td>
+      <td><span class="bdg ${u.active?'bdg-ok':'bdg-no'}"><span class="bdg-dot"></span>${u.active?t('statusActive'):t('statusInactive')}</span></td>
+      <td style="color:var(--t2);font-size:13px">${fmtDate(u.createdAt)}</td>
+      <td style="text-align:right">
+        <div style="display:flex;gap:6px;justify-content:flex-end">
+          <button class="btn btn-s btn-sm" onclick="openEditUser('${u.id}')">${SVG.edit} ${t('btnEdit')}</button>
+          <button class="btn btn-d btn-sm" onclick="delUser('${u.id}','${esc(u.name)}')">${SVG.trash} ${t('btnDelete')}</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function getUserFormHtml(){
+  return `
+  <div class="fg"><label>${t('fullNameLabel')}</label><input id="f-un" placeholder="e.g. Amit Sharma" /></div>
+  <div class="fg"><label>${t('emailLabelReq')}</label><input id="f-ue" type="email" placeholder="amit@shop.com" /></div>
+  <div class="fg"><label id="f-up-lbl">${t('passwordLabelReq')}</label><input id="f-up" type="password" placeholder="Min 6 characters" /></div>
+  <div class="fg"><label>${t('thRole')}</label>
+    <select id="f-ur"><option value="STAFF">${t('roleStaff')}</option><option value="OWNER">${t('roleOwner')}</option></select>
+  </div>
+  <div class="fg"><label>${t('statusLabel')}</label>
+    <select id="f-uact"><option value="true">${t('statusActive')}</option><option value="false">${t('statusInactive')}</option></select>
+  </div>`;
+}
+
+$('newuser-btn').onclick=()=>{
+  if(!selStore){toast(t('selectStoreFirstToast'),'er');return;}
+  const sn=stores.find(s=>s.id===selStore)?.name||'';
+  openModal(t('addUserTitle', sn), getUserFormHtml(),
+    `<button class="btn btn-s" onclick="closeModal()">${t('btnCancel')}</button>
+     <button class="btn btn-p" id="mu-btn">${t('addUser')}</button>`);
+  $('mu-btn').onclick=submitCreateUser;
+};
+async function submitCreateUser(){
+  const n=$('f-un').value.trim(),e=$('f-ue').value.trim(),p=$('f-up').value;
+  if(!n||!e||!p){modalErr(t('userFieldsReqErr'));return;}
+  try{
+    $('mu-btn').disabled=true; $('mu-btn').textContent=t('adding');
+    await apiFetch(`/admin/stores/${selStore}/users`,{method:'POST',body:JSON.stringify({
+      name:n,email:e,password:p,role:$('f-ur').value,active:$('f-uact').value==='true'
+    })});
+    closeModal(); toast(t('userAddedToast')); loadUsers(selStore);
+  }catch(err){modalErr(err.message);}
+  finally{const b=$('mu-btn');if(b){b.disabled=false;b.textContent=t('addUser');}}
+}
+function openEditUser(id){
+  const u=users.find(x=>x.id===id); if(!u) return;
+  openModal(t('editUserTitle'), getUserFormHtml(),
+    `<button class="btn btn-s" onclick="closeModal()">${t('btnCancel')}</button>
+     <button class="btn btn-p" id="mu-btn">${t('saveChangesBtn')}</button>`);
+  $('f-up-lbl').textContent=t('newPasswordLabel'); $('f-up').placeholder=t('newPasswordPlaceholder');
+  $('f-un').value=u.name; $('f-ue').value=u.email;
+  $('f-ur').value=u.role; $('f-uact').value=u.active?'true':'false';
+  $('mu-btn').onclick=async()=>{
+    const n=$('f-un').value.trim(),e=$('f-ue').value.trim(),p=$('f-up').value;
+    if(!n||!e){modalErr(t('userUpdateFieldsReqErr'));return;}
+    const body={name:n,email:e,role:$('f-ur').value,active:$('f-uact').value==='true'};
+    if(p) body.password=p;
+    try{
+      $('mu-btn').disabled=true; $('mu-btn').textContent=t('saving');
+      await apiFetch(`/admin/stores/${selStore}/users/${id}`,{method:'PATCH',body:JSON.stringify(body)});
+      closeModal(); toast(t('userUpdatedToast')); loadUsers(selStore);
+    }catch(err){modalErr(err.message);}
+    finally{const b=$('mu-btn');if(b){b.disabled=false;b.textContent=t('saveChangesBtn');}}
+  };
+}
+async function delUser(id,name){
+  const ok=await showConfirm(t('delUserTitle'), t('delUserMsg', name));
+  if(!ok)return;
+  try{
+    await apiFetch(`/admin/stores/${selStore}/users/${id}`,{method:'DELETE'});
+    toast(t('userRemovedToast', name)); loadUsers(selStore);
+  }catch(err){toast(err.message,'er');}
+}
+
+// ── INIT ──────────────────────────────────────────────
+function initApp(){
+  $('login').style.display='none'; $('app').classList.add('show');
+  if(me){ $('aname').textContent=me.name||me.email; $('aav').textContent=initials(me.name||me.email); }
+  applyAdminLang();
+  navigate('dashboard');
+}
+
+// Apply initial language state
+document.querySelectorAll('.lang-btn').forEach(b=>{
+  b.classList.toggle('on', b.dataset.lang === adminLang);
+});
+applyAdminLang();
+
+if(tok){
+  apiFetch('/admin/me').then(d=>{ me=d; localStorage.setItem('adm_me',JSON.stringify(d)); initApp(); })
+    .catch(()=>{ tok=''; localStorage.removeItem('adm_tok'); });
+}
+</script>
+</body>
+</html>
